@@ -1,0 +1,445 @@
+
+ <!DOCTYPE HTML>
+<html >
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu_union_verify" content="d1952c66cf48912e21c18c7c581f382a">
+  <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
+<meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
+  
+    <title>SQL Cursor 游标的使用 | Lynna&#39;s Blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Lina Pan">
+    
+    <meta name="description" content="SQL Cursor 游标的使用这两天在做新老系统间的data migration，接触到sql的游标，记录总结一下。
+我们的需求是要求map多张表，并把计算结果分别更新到一张目标表中, 新旧系统要做A/B Testing, 所以当旧表有任何更新，比如新增，删除，改动， 都要更新到新表中。
+原本我选">
+    
+    
+    
+    
+    <link rel="alternate" href="atom.xml" title="Lynna&#39;s Blog" type="application/atom+xml">
+    
+    
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <script>
+        var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            var _bdId ='391982416296a0d54221f59fe35250d4';
+             hm.src = "//hm.baidu.com/hm.js?" + _bdId;
+             var s = document.getElementsByTagName("script")[0]; 
+             s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+     
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="Lynna&#39;s Blog">Lynna&#39;s Blog</a></h1>
+				<a class="blog-motto">怕什么真理无穷， 进一寸有一寸的欢喜</a>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+					<li>
+					
+                                            <form class="search" action=https://lynnapan.github.io/ target="_blank">
+                                            <label>Search</label>
+                                        <input name="s" type="hidden" value= null ><input type="text" name="q" size="30" placeholder="Search"><br>
+					
+					</li>
+				</ul>
+                            </nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2016/05/31/SQL Cursor 游标的使用/" title="SQL Cursor 游标的使用" itemprop="url">SQL Cursor 游标的使用</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="https://lynnapan.github.io" title="Lina Pan">Lina Pan</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2016-05-31T13:54:53.000Z" itemprop="datePublished">2016-05-31</time>
+    Updated:<time datetime="2016-06-30T07:14:48.010Z" itemprop="dateModified">2016-06-30</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">Contents</strong>
+		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#SQL-Cursor-游标的使用"><span class="toc-number">1.</span> <span class="toc-text">SQL Cursor 游标的使用</span></a></li></ol>
+		</div>
+		
+		<h2 id="SQL-Cursor-游标的使用"><a href="#SQL-Cursor-游标的使用" class="headerlink" title="SQL Cursor 游标的使用"></a>SQL Cursor 游标的使用</h2><p>这两天在做新老系统间的data migration，接触到sql的游标，记录总结一下。</p>
+<p>我们的需求是要求map多张表，并把计算结果分别更新到一张目标表中, 新旧系统要做A/B Testing, 所以当旧表有任何更新，比如新增，删除，改动， 都要更新到新表中。</p>
+<p>原本我选择的方案是采用批量Insert, 但碰到一个需要插入map关系的表， 其中一个field是另外一张表刚刚插入数据的id， 因此只能用循环来解决。 看了一圈SQL的for循环，实现起来略显费力。当然也有用<code>while do</code>或临时表等其他解决方案，欢迎发邮件探讨，这里分享一下游标的使用心得。</p>
+<p>以我的理解，可以把游标想象成一个指针，我们使用一个指针的时候需要做的事情：</p>
+<ul>
+<li>声明指针</li>
+<li>把指针指向一个地址</li>
+<li>获取指针内容</li>
+<li>移动指针指向新的地址</li>
+</ul>
+<p>这样理解起来游标就比较方便， 下面举个例子来说明游标的使用方法：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line"><span class="comment">--声明一些后面需要用到的面临</span></div><div class="line"><span class="keyword">DECLARE</span> @vm_bucket_id <span class="built_in">bigint</span>, @<span class="keyword">group_id</span> <span class="built_in">bigint</span>, @<span class="keyword">name</span> <span class="built_in">varchar</span>(<span class="number">50</span>)</div><div class="line"><span class="comment">--声明游标 </span></div><div class="line"><span class="keyword">DECLARE</span> MyCursor <span class="keyword">CURSOR</span> </div><div class="line"><span class="comment">--查询出数据结果集合，游标将指向这个集合	 </span></div><div class="line"><span class="keyword">FOR</span> (<span class="keyword">SELECT</span> <span class="keyword">id</span>, <span class="keyword">group_id</span>, <span class="keyword">name</span> <span class="keyword">FROM</span> dbo.vm_bucket <span class="keyword">WHERE</span> <span class="keyword">id</span> <span class="keyword">NOT</span> <span class="keyword">IN</span>(</div><div class="line"><span class="keyword">SELECT</span> object_id <span class="keyword">from</span> dbo.resource_group_map <span class="keyword">where</span> <span class="keyword">object</span>=<span class="number">29</span>)) <span class="keyword">ORDER</span> <span class="keyword">BY</span> <span class="keyword">id</span> </div><div class="line"><span class="comment">--打开游标	</span></div><div class="line"><span class="keyword">OPEN</span> MyCursor 		</div><div class="line"><span class="comment">--从游标中取出内容放到声明好的变量中 </span></div><div class="line"><span class="keyword">FETCH</span> <span class="keyword">NEXT</span> <span class="keyword">FROM</span> MyCursor <span class="keyword">INTO</span> @vm_bucket_id, @<span class="keyword">group_id</span>, @<span class="keyword">name</span></div><div class="line"><span class="comment">--对取出的数据进行判断和处理</span></div><div class="line"><span class="keyword">WHILE</span> @@FETCH_STATUS = <span class="number">0</span></div><div class="line">		<span class="keyword">BEGIN</span></div><div class="line">			<span class="comment">--插入数据</span></div><div class="line">			<span class="keyword">INSERT</span> <span class="keyword">INTO</span> dbo.resource_group</div><div class="line">			(<span class="keyword">name</span>, <span class="keyword">group_id</span>, user_id, created_date)</div><div class="line">			<span class="keyword">VALUES</span> (@<span class="keyword">name</span>, @<span class="keyword">group_id</span>, <span class="number">0</span>, <span class="keyword">getutcdate</span>())</div><div class="line">		</div><div class="line">			<span class="comment">--把刚刚插入数据的id作为结果插入到另一张表</span></div><div class="line">			<span class="keyword">INSERT</span> <span class="keyword">INTO</span> dbo.resource_group_map</div><div class="line">			(resource_group_id, <span class="keyword">object</span>, object_id)</div><div class="line">			<span class="keyword">VALUES</span> (@@<span class="keyword">identity</span>, <span class="number">29</span>, @vm_bucket_id)</div><div class="line"></div><div class="line">			<span class="comment">--读取下一行</span></div><div class="line">			<span class="keyword">FETCH</span> <span class="keyword">NEXT</span> <span class="keyword">FROM</span> MyCursor <span class="keyword">INTO</span> @vm_bucket_id, @<span class="keyword">group_id</span>, @<span class="keyword">name</span></div><div class="line">		<span class="keyword">END</span></div><div class="line"><span class="comment">--关闭游标</span></div><div class="line"><span class="keyword">CLOSE</span> MyCursor</div><div class="line"><span class="comment">--释放游标</span></div><div class="line"><span class="keyword">DEALLOCATE</span> MyCursor</div></pre></td></tr></table></figure>
+<p><br><br><b>总结：</b> 游标是一种较易理解易读的程序写作模型，但如果使用不当，很容易扼杀性能，谨慎使用。</p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/mssql-数据库/">mssql 数据库</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="https://lynnapan.github.io/2016/05/31/SQL Cursor 游标的使用/" data-title="SQL Cursor 游标的使用 | Lynna&#39;s Blog" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/07/07/Web security principles/" title="Web security principles">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  Web security principles</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/03/21/Docker Swarm和Kubernetes在大规模集群中的性能比较/"  title="Docker Swarm和Kubernetes在大规模集群中的性能比较">
+ <strong>NEXT:</strong><br/> 
+ <span>Docker Swarm和Kubernetes在大规模集群中的性能比较
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+<section class="comment">
+	
+	<div class="ds-thread" data-title="SQL Cursor 游标的使用" data-thread-key="SQL Cursor 游标的使用" data-author-key="Lina Pan" data-url="https://lynnapan.github.io/post/SQL Cursor 游标的使用"></div>
+	
+</section>
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#SQL-Cursor-游标的使用"><span class="toc-number">1.</span> <span class="toc-text">SQL Cursor 游标的使用</span></a></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+<div id="authorInfo">
+	
+		<div class="author-logo"></div>		
+	
+	<div class="social-list" class="clearfix">
+		
+		<a href="http://weibo.com/1912518851" target="_blank" title="weibo"></a>
+		
+		
+		
+		<a href="https://github.com/LynnaPan" target="_blank" title="github"></a>
+		
+		
+		
+	</div>
+</div>
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">Categories</p>
+		<ul>
+		
+			<li><a href="/categories/Data-Center/" title="Data Center">Data Center<sup>2</sup></a></li>
+		
+			<li><a href="/categories/Python/" title="Python">Python<sup>1</sup></a></li>
+		
+			<li><a href="/categories/Web/" title="Web">Web<sup>1</sup></a></li>
+		
+			<li><a href="/categories/docker/" title="docker">docker<sup>1</sup></a></li>
+		
+			<li><a href="/categories/mssql-数据库/" title="mssql 数据库">mssql 数据库<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  
+
+  <div class="linkslist">
+  <p class="asidetitle">Links</p>
+    <ul>
+      <li><a href="http://julyhou24.org/" target="_blank" title="Hexo">一本正经地胡说八道</a></li>
+    </ul>
+</div>
+
+
+  <div class="rsspart">
+	<a href="atom.xml" target="_blank" title="rss">RSS</a>
+</div>
+
+  
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+    
+            <p class="copyright"> © 2016 
+		
+		<a href="https://lynnapan.github.io" target="_blank" title="Lina Pan">Lina Pan</a>
+		
+            && Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> && Theme by <a href="http://gengbiao.me" target="_blank" title="coney">coney</a>
+            </div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+<script type="text/javascript">
+  var duoshuoQuery = {short_name:"null"};
+  (function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = '//static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+    || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+</script> 
+
+
+
+
+
+
+<script>
+    
+        var _bdImg = '4';
+    
+    window._bd_share_config={
+        "common":{
+            "bdSnsKey":{
+
+            },
+            "bdText":"",
+            "bdMini":"2",
+            "bdMiniList":[
+                "qzone",
+                "tsina",
+                "weixin",
+                "renren",
+                "tqq",
+                "tieba",
+                "douban",
+                "sqq",
+                "diandian",
+                "huaban",
+                "youdao",
+                "mail",
+                "ty",
+                "fbook",
+                "twi",
+                "linkedin",
+                "copy",
+                "print"
+            ],
+            "bdPic":"",
+            "bdStyle":"0",
+            "bdSize":"16"
+        },
+        "slide":{
+            "type":"slide",
+            "bdImg":_bdImg,
+            "bdPos":"right",
+            "bdTop":"350"
+        },
+        "image":{
+            "viewList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ],
+            "viewText":"分享：",
+            "viewSize":"16"
+        },
+        "selectShare":{
+            "bdContainerClass":null,
+            "bdSelectMiniList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ]
+        }
+    };
+    with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+
+
+
+
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+ga('create', 'null', 'null');  
+ga('send', 'pageview');
+</script>
+
+
+  </body>
+</html>
+

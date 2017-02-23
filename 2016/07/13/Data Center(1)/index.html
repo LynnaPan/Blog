@@ -1,0 +1,459 @@
+
+ <!DOCTYPE HTML>
+<html >
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu_union_verify" content="d1952c66cf48912e21c18c7c581f382a">
+  <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
+<meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
+  
+    <title>DataCenter Overview:Google Datacenter WSC | Lynna&#39;s Blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Lina Pan">
+    
+    <meta name="description" content="WSC简介今天把Google的《The Datacenter as a Computer》看了一遍，它介绍了谷歌的一种数据中心类型——Warehouse-scale computers(WSC)。 
+那么这种类型的数据中心跟传统的数据中心有什么区别呢？
+传统的数据中心，通常是host大量的中小型应用">
+    
+    
+    
+    
+    <link rel="alternate" href="atom.xml" title="Lynna&#39;s Blog" type="application/atom+xml">
+    
+    
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <script>
+        var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            var _bdId ='391982416296a0d54221f59fe35250d4';
+             hm.src = "//hm.baidu.com/hm.js?" + _bdId;
+             var s = document.getElementsByTagName("script")[0]; 
+             s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+     
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="Lynna&#39;s Blog">Lynna&#39;s Blog</a></h1>
+				<a class="blog-motto">怕什么真理无穷， 进一寸有一寸的欢喜</a>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+					<li>
+					
+                                            <form class="search" action=https://lynnapan.github.io/ target="_blank">
+                                            <label>Search</label>
+                                        <input name="s" type="hidden" value= null ><input type="text" name="q" size="30" placeholder="Search"><br>
+					
+					</li>
+				</ul>
+                            </nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2016/07/13/Data Center(1)/" title="DataCenter Overview:Google Datacenter WSC" itemprop="url">DataCenter Overview:Google Datacenter WSC</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="https://lynnapan.github.io" title="Lina Pan">Lina Pan</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2016-07-13T11:10:53.000Z" itemprop="datePublished">2016-07-13</time>
+    Updated:<time datetime="2016-07-13T13:10:15.467Z" itemprop="dateModified">2016-07-13</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">Contents</strong>
+		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#WSC简介"><span class="toc-number">1.</span> <span class="toc-text">WSC简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#WSC架构简介"><span class="toc-number">2.</span> <span class="toc-text">WSC架构简介</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#1-存储"><span class="toc-number"></span> <span class="toc-text">1. 存储</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#2-网络设备"><span class="toc-number"></span> <span class="toc-text">2. 网络设备</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#3-存储层级"><span class="toc-number"></span> <span class="toc-text">3.存储层级</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#4-量化延迟，带宽和容量"><span class="toc-number"></span> <span class="toc-text">4.量化延迟，带宽和容量</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#5-电源使用情况"><span class="toc-number"></span> <span class="toc-text">5.电源使用情况</span></a>
+		</div>
+		
+		<h2 id="WSC简介"><a href="#WSC简介" class="headerlink" title="WSC简介"></a>WSC简介</h2><p>今天把Google的《The Datacenter as a Computer》看了一遍，它介绍了谷歌的一种数据中心类型——Warehouse-scale computers(WSC)。 </p>
+<p>那么这种类型的数据中心跟传统的数据中心有什么区别呢？</p>
+<p>传统的数据中心，通常是host大量的中小型应用，每个应用都运行在一个相对专用的硬件设施上。这些数据中心一般会给不同的公司或组织提供不同的软硬件。那么这些不同的软硬件之间一般也没什么共同点，也不会互相交换信息。</p>
+<p>WSC这种类型的数据中心，作为一种服务，由Google呀，Amazon，Facebook等公司的在线服务部门提供。它跟传统的数据中心的区别： 它属于一个单独的组织，采用相对同质化的软硬件，并且共享一个相同的系统管理层。很多应用，中间层以及服务都是系统自带的。最重要的一点是，WSC运行少量的大应用（或网络服务）， 公用资源管理基础设施架构可以做到部署灵活性。</p>
+<p>现在的数据中心不再单纯是机器的集合。很多服务例如Gmail，Web搜索服务并不是运行在一个单台机器上或单个机架上，它们是运行在由百个甚至上千个服务器组成的集群上。因此，这里的大集群本身是一个单计算单元。这已经成为一个趋势，以后越来越多公司有能力也会有财力去构建这样的数据中心。</p>
+<h2 id="WSC架构简介"><a href="#WSC架构简介" class="headerlink" title="WSC架构简介"></a>WSC架构简介</h2><p><img src="/images/DC/1.PNG" alt=""></p>
+<center>图1</center>
+
+<p>上图所示是Goole的WSC总结构图。 它由一系列的1U或刀片机通过一个本地以太网交换机挂载到一个机柜上。这些机柜级别的交换机，可以达到1-10Gbp的连接速度，有一些上层链路连接到一个或者多个集群级（数据中心级）的以太网交换机上。这些二级交换机可以扩展至几万个的单独服务器。</p>
+<p>刀片式的服务器在刀片内有一个额外的一级网络集合，用于多个运行的刀片服务器通过PCIe等IO总线连接到一些网络刀片。</p>
+<p>下图就是Google在2012年的WSC数据中心。<br><img src="/images/DC/2.PNG" alt=""></p>
+<center>图2</center>
+
+<h1 id="1-存储"><a href="#1-存储" class="headerlink" title="1. 存储"></a>1. 存储</h1><p>磁盘或内存设备是直接连接到每台单独的服务器上，由全球分布文件系统（例如Google的GFS, 有兴趣的童鞋自行google)或作为网络附加存储(Network Attached Storage (NAS))设备的一部分直接连接到集群级别的交换架构上。 应用NAS会是一个更加简单的部署方案因为它允许一部分的数据管理任务外包给NAS设备供应商。 让存储和计算节点分离也可以保证服务的质量因为NAS在存储服务器之外不运行计算任务。</p>
+<p>相反的，给计算节点直接附加磁盘可以减少硬件成本（磁盘在现有的服务器机箱上使用），并且提高网络设备的使用率（每个服务器的网络接口可以被计算任务和文件系统之间动态共享）。</p>
+<p>NAND闪存技术（Intel和Micron在2015年宣布了3D NAND闪存技术）让SSD有可能在WSC中广泛使用。虽然SSD上每个byte的存储成本比磁盘技术要高，但很多网络服务所需要的I/O传输率是传统磁盘系统达不到的。因此数据中心采用SSD代替磁盘驱动器成为了趋势。</p>
+<h1 id="2-网络设备"><a href="#2-网络设备" class="headerlink" title="2. 网络设备"></a>2. 网络设备</h1><p>为WSC数据中心选择网络设备，要考虑因素是速度，规模和成本。在我们讨论的系统内，有高达48个端口的1Gbps以太网网络交换机是商用组件，每台服务器连接到一个机柜上（包括交换端口，线，和服务器网卡）的成本少于$30/Gbps。因此一个机柜上的服务器的带宽是差不多的。但是，用于连接到WSC集群上的多端口交换机价格就不是一个数量级的了，每个端口的成本会比商用机柜交换机贵十倍不止。</p>
+<p>因此，WSC上的网络设备通常由两种级别组成。如图1所示，每个机柜上商用的交换机都提供带宽二分之一的碎片用于机柜间通信，只有少量的上行链通信到更耗资源的集群级交换机。举个例子，一个有40台服务器的机柜，每个服务器有一个1-Gbps的端口，可能有4到8个1-Gbps的上行链路到集群级别的交换机，考虑到相应的超额申请因素，大约有10到5用于机柜间的通信。在这样一种网络中，开发者必须意识到相对稀缺的集群级带宽资源，并尽量开发本地的机柜级别网络。</p>
+<p>或者，另一个方案是通过花更多的钱在内联设备上来解决集群级别网络通信的瓶颈。举个例子，无限带宽的内联器可以扩展至数千端口，但每个端口将花费500-2000美元。相应的，有一个网络供应商开始提供大规模的以太网设备，但买个服务器多花费数百美元。所以是要花钱在购买网络设备上，还是用同等的钱购买更多的服务器和存储是因情况而异的，没有标准答案。</p>
+<h1 id="3-存储层级"><a href="#3-存储层级" class="headerlink" title="3.存储层级"></a>3.存储层级</h1><p>下图展示的是程序员视角的假定WSC存储层级。一个服务器由很多处理器插槽组成，每个插片有多核CPU和内部的多级缓存，本地共享和一级DRAM，一些直接附上去的磁盘或闪存固态存储（也就是上面说的NAND)。机柜内的DRAM和磁盘/闪存资源可以被以及机柜交换机获取到， 并且全部机柜的全部资源可以通过集群级别的交换机获取到。不同资源的相对平衡取决于目标应用的需求。特别是基于闪存的固态存储最近在加到WSC的存储架构中，并且在现实中被广泛使用。<br><img src="/images/DC/3.PNG" alt=""></p>
+<center>图3</center>
+
+<h1 id="4-量化延迟，带宽和容量"><a href="#4-量化延迟，带宽和容量" class="headerlink" title="4.量化延迟，带宽和容量"></a>4.量化延迟，带宽和容量</h1><p>图4展示的是尝试将一个WSC的延迟，带宽和容量特性进行量化。我们假设一个系统有2400台服务器，每个服务器又16GB的DRAM和2TB的硬盘容量（在这里我们不采用闪存因为部署模式非常不同）。每个组由80台服务器组成，通过一个1-Gbps的网络连接到集群级别的交换机（超额申请系数为5）。网络延迟假设是一个TCP-IP传输网络，并且网络带宽的情况是，假设超售上行链路集合后的每个服务器是平等共享集群级别的可用带宽。<br><img src="/images/DC/4.PNG" alt=""></p>
+<center>图4</center>
+
+<p>图表显示的是每个资源池的相对延迟，带宽和容量。举个例子，本地磁盘的可用带宽是200MB/s，而机柜外的磁盘只有25MB/s因为需要共享上行链路。另外一方面，集群的磁盘容量几乎是本地DRAM的一万多倍。</p>
+<h1 id="5-电源使用情况"><a href="#5-电源使用情况" class="headerlink" title="5.电源使用情况"></a>5.电源使用情况</h1><p>能源的使用情况在WSC的设计中也特别重要，因为能源相关的成本成为这种类型系统的重要部分。下图显示了2007年，谷歌主要部门统计的某代WSC的主要能耗表，可以看出能源是怎么样被现代IT设备所使用的。<br><img src="/images/DC/5.PNG" alt=""></p>
+<center>图5</center>  
+	</div>
+		<footer class="article-footer clearfix">
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Data-Center/">Data Center</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="https://lynnapan.github.io/2016/07/13/Data Center(1)/" data-title="DataCenter Overview:Google Datacenter WSC | Lynna&#39;s Blog" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/12/15/Turbo和Intel_Pstate/" title="Turbo 和 Intel Pstate">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  Turbo 和 Intel Pstate</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/07/08/Python爬虫（一） 之Beautiful Soup/"  title="Python爬虫（一） 之Beautiful Soup">
+ <strong>NEXT:</strong><br/> 
+ <span>Python爬虫（一） 之Beautiful Soup
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+<section class="comment">
+	
+	<div class="ds-thread" data-title="DataCenter Overview:Google Datacenter WSC" data-thread-key="Data Center(1)" data-author-key="Lina Pan" data-url="https://lynnapan.github.io/post/Data Center(1)"></div>
+	
+</section>
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#WSC简介"><span class="toc-number">1.</span> <span class="toc-text">WSC简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#WSC架构简介"><span class="toc-number">2.</span> <span class="toc-text">WSC架构简介</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#1-存储"><span class="toc-number"></span> <span class="toc-text">1. 存储</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#2-网络设备"><span class="toc-number"></span> <span class="toc-text">2. 网络设备</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#3-存储层级"><span class="toc-number"></span> <span class="toc-text">3.存储层级</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#4-量化延迟，带宽和容量"><span class="toc-number"></span> <span class="toc-text">4.量化延迟，带宽和容量</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#5-电源使用情况"><span class="toc-number"></span> <span class="toc-text">5.电源使用情况</span></a>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+<div id="authorInfo">
+	
+		<div class="author-logo"></div>		
+	
+	<div class="social-list" class="clearfix">
+		
+		<a href="http://weibo.com/1912518851" target="_blank" title="weibo"></a>
+		
+		
+		
+		<a href="https://github.com/LynnaPan" target="_blank" title="github"></a>
+		
+		
+		
+	</div>
+</div>
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">Categories</p>
+		<ul>
+		
+			<li><a href="/categories/Data-Center/" title="Data Center">Data Center<sup>2</sup></a></li>
+		
+			<li><a href="/categories/Python/" title="Python">Python<sup>1</sup></a></li>
+		
+			<li><a href="/categories/Web/" title="Web">Web<sup>1</sup></a></li>
+		
+			<li><a href="/categories/docker/" title="docker">docker<sup>1</sup></a></li>
+		
+			<li><a href="/categories/mssql-数据库/" title="mssql 数据库">mssql 数据库<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  
+
+  <div class="linkslist">
+  <p class="asidetitle">Links</p>
+    <ul>
+      <li><a href="http://julyhou24.org/" target="_blank" title="Hexo">一本正经地胡说八道</a></li>
+    </ul>
+</div>
+
+
+  <div class="rsspart">
+	<a href="atom.xml" target="_blank" title="rss">RSS</a>
+</div>
+
+  
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+    
+            <p class="copyright"> © 2016 
+		
+		<a href="https://lynnapan.github.io" target="_blank" title="Lina Pan">Lina Pan</a>
+		
+            && Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> && Theme by <a href="http://gengbiao.me" target="_blank" title="coney">coney</a>
+            </div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+<script type="text/javascript">
+  var duoshuoQuery = {short_name:"null"};
+  (function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = '//static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+    || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+</script> 
+
+
+
+
+
+
+<script>
+    
+        var _bdImg = '4';
+    
+    window._bd_share_config={
+        "common":{
+            "bdSnsKey":{
+
+            },
+            "bdText":"",
+            "bdMini":"2",
+            "bdMiniList":[
+                "qzone",
+                "tsina",
+                "weixin",
+                "renren",
+                "tqq",
+                "tieba",
+                "douban",
+                "sqq",
+                "diandian",
+                "huaban",
+                "youdao",
+                "mail",
+                "ty",
+                "fbook",
+                "twi",
+                "linkedin",
+                "copy",
+                "print"
+            ],
+            "bdPic":"",
+            "bdStyle":"0",
+            "bdSize":"16"
+        },
+        "slide":{
+            "type":"slide",
+            "bdImg":_bdImg,
+            "bdPos":"right",
+            "bdTop":"350"
+        },
+        "image":{
+            "viewList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ],
+            "viewText":"分享：",
+            "viewSize":"16"
+        },
+        "selectShare":{
+            "bdContainerClass":null,
+            "bdSelectMiniList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ]
+        }
+    };
+    with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+
+
+
+
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+ga('create', 'null', 'null');  
+ga('send', 'pageview');
+</script>
+
+
+  </body>
+</html>
+
