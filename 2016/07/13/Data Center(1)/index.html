@@ -82,7 +82,7 @@
     </p>
   <p class="article-time">
     <time datetime="2016-07-13T11:10:53.000Z" itemprop="datePublished">2016-07-13</time>
-    Updated:<time datetime="2016-07-13T13:10:15.467Z" itemprop="dateModified">2016-07-13</time>
+    Updated:<time datetime="2017-04-18T06:02:47.539Z" itemprop="dateModified">2017-04-18</time>
     
   </p>
 </header>
@@ -94,7 +94,7 @@
 		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#WSC简介"><span class="toc-number">1.</span> <span class="toc-text">WSC简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#WSC架构简介"><span class="toc-number">2.</span> <span class="toc-text">WSC架构简介</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#1-存储"><span class="toc-number"></span> <span class="toc-text">1. 存储</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#2-网络设备"><span class="toc-number"></span> <span class="toc-text">2. 网络设备</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#3-存储层级"><span class="toc-number"></span> <span class="toc-text">3.存储层级</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#4-量化延迟，带宽和容量"><span class="toc-number"></span> <span class="toc-text">4.量化延迟，带宽和容量</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#5-电源使用情况"><span class="toc-number"></span> <span class="toc-text">5.电源使用情况</span></a>
 		</div>
 		
-		<h2 id="WSC简介"><a href="#WSC简介" class="headerlink" title="WSC简介"></a>WSC简介</h2><p>今天把Google的《The Datacenter as a Computer》看了一遍，它介绍了谷歌的一种数据中心类型——Warehouse-scale computers(WSC)。 </p>
+		<h2 id="WSC简介"><a href="#WSC简介" class="headerlink" title="WSC简介"></a>WSC简介</h2><p><img src="/images/cache1.png" alt=""><br>今天把Google的《The Datacenter as a Computer》看了一遍，它介绍了谷歌的一种数据中心类型——Warehouse-scale computers(WSC)。 </p>
 <p>那么这种类型的数据中心跟传统的数据中心有什么区别呢？</p>
 <p>传统的数据中心，通常是host大量的中小型应用，每个应用都运行在一个相对专用的硬件设施上。这些数据中心一般会给不同的公司或组织提供不同的软硬件。那么这些不同的软硬件之间一般也没什么共同点，也不会互相交换信息。</p>
 <p>WSC这种类型的数据中心，作为一种服务，由Google呀，Amazon，Facebook等公司的在线服务部门提供。它跟传统的数据中心的区别： 它属于一个单独的组织，采用相对同质化的软硬件，并且共享一个相同的系统管理层。很多应用，中间层以及服务都是系统自带的。最重要的一点是，WSC运行少量的大应用（或网络服务）， 公用资源管理基础设施架构可以做到部署灵活性。</p>
