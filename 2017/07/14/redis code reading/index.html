@@ -7,16 +7,12 @@
   <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
 <meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
   
-    <title>Web security principles | Lynna&#39;s Blog</title>
+    <title>阅读redis代码（一） | Lynna&#39;s Blog</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="Lina Pan(panlina_lynna@outlook.com)">
     
-    <meta name="description" content="Web security principlesTotal security is unachievable.
-1. Least privilege 最少的权限
-2. Simple is more secure 越简单越安全
-    a. Legacy code
-    b. Built-in fun">
+    <meta name="description" content="Redis是一个使用ANSI C编写的开源、支持网络、基于内存、可选持久性的键值对存储数据库。从2015年6月开始，Redis的开发由Redis Labs赞助，而2013年5月至2015年6月期间，其开发由Pivotal赞助。在2013年5月之前，其开发由VMware赞助。根据月度排行网站DB-En">
     
     
     
@@ -76,15 +72,15 @@
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2016/07/07/Web security principles/" title="Web security principles" itemprop="url">Web security principles</a>
+      <a href="/2017/07/14/redis code reading/" title="阅读redis代码（一）" itemprop="url">阅读redis代码（一）</a>
   </h1>
   <p class="article-author">By
     
       <a href="https://lynnapan.github.io" title="Lina Pan(panlina_lynna@outlook.com)">Lina Pan(panlina_lynna@outlook.com)</a>
     </p>
   <p class="article-time">
-    <time datetime="2016-07-07T11:10:53.000Z" itemprop="datePublished">2016-07-07</time>
-    更新日期:<time datetime="2016-07-08T12:34:18.180Z" itemprop="dateModified">2016-07-08</time>
+    <time datetime="2017-07-14T03:54:53.000Z" itemprop="datePublished">2017-07-14</time>
+    更新日期:<time datetime="2017-07-30T12:12:50.039Z" itemprop="dateModified">2017-07-30</time>
     
   </p>
 </header>
@@ -93,65 +89,31 @@
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">文章目录</strong>
-		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Web-security-principles"><span class="toc-number">1.</span> <span class="toc-text">Web security principles</span></a></li></ol>
+		
 		</div>
 		
-		<h2 id="Web-security-principles"><a href="#Web-security-principles" class="headerlink" title="Web security principles"></a>Web security principles</h2><p>Total security is unachievable.</p>
-<pre><code>1. Least privilege 最少的权限
-2. Simple is more secure 越简单越安全
-    a. Legacy code
-    b. Built-in functions are often better your own versions
-    c. Disable or remove unused features when possible
-3. Never trust users 永远不要相信用户
-    a. Well-meaning users can cause problems
-    b. Be paranoid
-    c. Don’t even trust admin users completely
-    d. Use caution with contractors
-    e. Even offline
-        i. Phone
-        ii. Email
-        iii. Printing
-4. Expect the unexpected 
-    a. Prevent the crime before it happens
-    b. Consider &quot;edge cases&quot;
-    c. Security is not reactive
-5. Defense in depth
-    a. Layer defense
-    b. Redundant security
-6. Security through obscurity
-    a. More information benefits hackers
-    b. Limit exposed information
-    c. Limit feedback
-    d. Obscurity does not mean misdirection
-7. Blacklisting and whitelisting
-8. Map exposure points and data passageways
-    a. Input
-        i. Urls
-        ii. Forms
-        iii. Cookies/sessions
-        iv. Database reads
-        v. Your public api
-    b. Outgoing exposure
-        i. HTML
-        ii. Javascript/json/xml/rss
-        iii. Cookies/sessions
-        iv. Database write
-        v. Third-party APIs
-</code></pre>  
+		<blockquote>
+<p>Redis是一个使用ANSI C编写的开源、支持网络、基于内存、可选持久性的键值对存储数据库。从2015年6月开始，Redis的开发由Redis Labs赞助，而2013年5月至2015年6月期间，其开发由Pivotal赞助。在2013年5月之前，其开发由VMware赞助。根据月度排行网站DB-Engines.com的数据显示，Redis是最流行的键值对存储数据库。<br>—— Wiki百科</p>
+</blockquote>
+<p>Redis作为轻量级内存型开源数据库，以其优秀的性能被广泛使用。许多语言都支持redis，包括：ActionScript, C, C++, C#, Clojure, Common Lisp, Dart, Erlang, Go, Haskell, Haxe, Io, Java, Node.js, Lua, Objective-C, Perl, PHP, Pure Data, Python, R, Ruby, Scala, Smalltalk, Tcl</p>
+<p>由于最近在用redis做大量的测试，测试的时候主要关注于内存性能。tunning性能的过程中我也好奇，redis是怎么实现的，据组里大牛说redis作为学习C代码阅读材料，绝对堪称经典，小而精，认真阅读学习会受益匪浅，因此决定开始redis源码阅读。 (ง •̀_•́)ง </p>
+<p><img src="/images/redis/1.png" alt=""></p>
+<center>图1</center><br>网络上有人推荐这样的<a href="http://blog.huangz.me/diary/2014/how-to-read-redis-source-code.html" target="_blank" rel="external">阅读顺序</a>，首先阅读数据结构，因为这部分与其他部分耦合最小，也是实现redis的基础。这篇blog主要针对数据结构做总结。<br><br># 数据结构<br><br>数据结构 | 源代码<br>——— | ———–<br>redis动态字符串 |  sds.h, sds.c<br>redis双端链表 | adlist.h, adlist.c<br>redis字典 | dict.h, dict.c<br>redis跳跃表 | server.h中zskiplistNode，zskiplist以及t_zset.c 中所有以zsl 开头的函数，比如zslCreate、zslInsert 、zslDeleteNode等<br>redis HyperLogLog | hyperloglog.c<br><br>那么下面就针对这些数据结构逐一学习。<br><br>## 简单动态字符串<br>redis在实现字符串中并没有采用传统C语言中的字符串表示（传统的C语言字符串是一个以空字符结尾的字符数组），而是自己定义了一种叫做简单动态字符串（simple dynamic string, 简称SDS)的抽象类型，并用SDS用作redis默认的字符串表示。<br><br>在Redis里面，C字符串只会作为字符串字面量（string literal）， 用在一些无须对字符串值进行修改的地方，比如打印日志。但当这个字符串需要被修改的时候，SDS就派上用场了。<br><br>举一个栗子，客户端set一个值时：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">redis&gt; SET msg &quot;hello world&quot;</div><div class="line">OK</div></pre></td></tr></table></figure><br><br>那么Redis将在数据库中创建了一个新的键值对，其中：<br><em> 键值对的键是一个字符串对象， 对象的底层实现是一个保存着字符串 “msg” 的 SDS 。
+</em> 键值对的值也是一个字符串对象， 对象的底层实现是一个保存着字符串 “hello world” 的 SDS 。<br><br>那么为什么要采用SDS呢，有什么好处？<br>sds.h中找到了sdshdr的结构体：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/* Note: sdshdr5 is never used, we just access the flags byte directly.</span></div><div class="line"> * However is here to document the layout of type 5 SDS strings. */</div><div class="line"><span class="keyword">struct</span> <span class="number">__</span>attribute__ ((<span class="number">__</span>packed__)) sdshdr5 &#123;</div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">char</span> flags; <span class="comment">/* 3 lsb of type, and 5 msb of string length */</span></div><div class="line">    <span class="keyword">char</span> buf[];</div><div class="line">&#125;;</div><div class="line"><span class="keyword">struct</span> <span class="number">__</span>attribute__ ((<span class="number">__</span>packed__)) sdshdr8 &#123;</div><div class="line">    <span class="keyword">uint8_t</span> len; <span class="comment">/* used */</span></div><div class="line">    <span class="keyword">uint8_t</span> alloc; <span class="comment">/* excluding the header and null terminator */</span></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">char</span> flags; <span class="comment">/* 3 lsb of type, 5 unused bits */</span></div><div class="line">    <span class="keyword">char</span> buf[];</div><div class="line">&#125;;</div><div class="line"><span class="keyword">struct</span> <span class="number">__</span>attribute__ ((<span class="number">__</span>packed__)) sdshdr16 &#123;</div><div class="line">    <span class="keyword">uint16_t</span> len; <span class="comment">/* used */</span></div><div class="line">    <span class="keyword">uint16_t</span> alloc; <span class="comment">/* excluding the header and null terminator */</span></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">char</span> flags; <span class="comment">/* 3 lsb of type, 5 unused bits */</span></div><div class="line">    <span class="keyword">char</span> buf[];</div><div class="line">&#125;;</div><div class="line"><span class="keyword">struct</span> <span class="number">__</span>attribute__ ((<span class="number">__</span>packed__)) sdshdr32 &#123;</div><div class="line">    <span class="keyword">uint32_t</span> len; <span class="comment">/* used */</span></div><div class="line">    <span class="keyword">uint32_t</span> alloc; <span class="comment">/* excluding the header and null terminator */</span></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">char</span> flags; <span class="comment">/* 3 lsb of type, 5 unused bits */</span></div><div class="line">    <span class="keyword">char</span> buf[];</div><div class="line">&#125;;</div><div class="line"><span class="keyword">struct</span> <span class="number">__</span>attribute__ ((<span class="number">__</span>packed__)) sdshdr64 &#123;</div><div class="line">    <span class="comment">//记录buf数组中已使用的字节数量</span></div><div class="line">    <span class="keyword">uint64_t</span> len; </div><div class="line">    <span class="comment">//分配的buf数组长度，不包括头和空字符结尾 </span></div><div class="line">    <span class="keyword">uint64_t</span> alloc;</div><div class="line">    <span class="comment">// 标志位， 3尾表示lsb类型，另外5个位没有使用</span></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">char</span> flags; </div><div class="line">    <span class="keyword">char</span> buf[];</div><div class="line">&#125;;</div></pre></td></tr></table></figure><br><br>通过代码可以看出SDS的组成结构有<br><img src="/images/redis/2.png" alt=""><br><center>图2 SDS结构体</center>  
 	</div>
 		<footer class="article-footer clearfix">
 
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/Web/">Web</a>
+  <a class="article-category-link" href="/categories/C/">C</a>
 </div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="https://lynnapan.github.io/2016/07/07/Web security principles/" data-title="Web security principles | Lynna&#39;s Blog" data-tsina="null" class="share clearfix">
+  <div data-url="https://lynnapan.github.io/2017/07/14/redis code reading/" data-title="阅读redis代码（一） | Lynna&#39;s Blog" data-tsina="null" class="share clearfix">
   </div>
 
 </div>
@@ -160,19 +122,11 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
- <a href="/2016/07/08/Python爬虫（一） 之Beautiful Soup/" title="Python爬虫（一） 之Beautiful Soup">
-  <strong>PREVIOUS:</strong><br/>
-  <span>
-  Python爬虫（一） 之Beautiful Soup</span>
-</a>
-</div>
-
 
 <div class="next">
-<a href="/2016/05/31/SQL Cursor 游标的使用/"  title="SQL Cursor 游标的使用">
+<a href="/2017/05/05/OVS-DPDK VS OVS Deep Dive/"  title="云环境上的OvS-DPDK VS OvS的Deep Dive">
  <strong>NEXT:</strong><br/> 
- <span>SQL Cursor 游标的使用
+ <span>云环境上的OvS-DPDK VS OvS的Deep Dive
 </span>
 </a>
 </div>
@@ -182,7 +136,7 @@
 	
 <section class="comment">
 	
-	<div class="ds-thread" data-title="Web security principles" data-thread-key="Web security principles" data-author-key="Lina Pan(panlina_lynna@outlook.com)" data-url="https://lynnapan.github.io/post/Web security principles"></div>
+	<div class="ds-thread" data-title="阅读redis代码（一）" data-thread-key="redis code reading" data-author-key="Lina Pan(panlina_lynna@outlook.com)" data-url="https://lynnapan.github.io/post/redis code reading"></div>
 	
 </section>
 
@@ -192,7 +146,7 @@
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">文章目录</strong>
-  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Web-security-principles"><span class="toc-number">1.</span> <span class="toc-text">Web security principles</span></a></li></ol>
+  
   </div>
 
 <div id="asidepart">

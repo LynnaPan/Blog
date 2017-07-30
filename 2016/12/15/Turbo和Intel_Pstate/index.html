@@ -10,7 +10,7 @@
     <title>服务器server的频率知识整理 | Lynna&#39;s Blog</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
-    <meta name="author" content="Lina Pan">
+    <meta name="author" content="Lina Pan(panlina_lynna@outlook.com)">
     
     <meta name="description" content="最近在做Turbo相关的控制，整理一下知识。
 1 服务器的频率当我们在讨论服务器的频率时，我们怎么沟通？工程师经常挂在嘴边：“这台机器P1频率是多少？P0n是多少？”
@@ -47,7 +47,7 @@
 				<h1 class="site-name"><a href="/" title="Lynna&#39;s Blog">Lynna&#39;s Blog</a></h1>
 				<a class="blog-motto">怕什么真理无穷， 进一寸有一寸的欢喜</a>
 			</div>
-			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
 			</a></div>
 			<nav class="animated">
 				<ul>
@@ -61,7 +61,7 @@
 					
                                             <form class="search" action=https://lynnapan.github.io/ target="_blank">
                                             <label>Search</label>
-                                        <input name="s" type="hidden" value= null ><input type="text" name="q" size="30" placeholder="Search"><br>
+                                        <input name="s" type="hidden" value= null ><input type="text" name="q" size="30" placeholder="搜索"><br>
 					
 					</li>
 				</ul>
@@ -79,11 +79,11 @@
   </h1>
   <p class="article-author">By
     
-      <a href="https://lynnapan.github.io" title="Lina Pan">Lina Pan</a>
+      <a href="https://lynnapan.github.io" title="Lina Pan(panlina_lynna@outlook.com)">Lina Pan(panlina_lynna@outlook.com)</a>
     </p>
   <p class="article-time">
     <time datetime="2016-12-15T11:10:53.000Z" itemprop="datePublished">2016-12-15</time>
-    Updated:<time datetime="2017-03-01T12:21:16.781Z" itemprop="dateModified">2017-03-01</time>
+    更新日期:<time datetime="2017-05-12T07:14:34.140Z" itemprop="dateModified">2017-05-12</time>
     
   </p>
 </header>
@@ -91,7 +91,7 @@
 		
 		
 		<div id="toc" class="toc-article">
-			<strong class="toc-title">Contents</strong>
+			<strong class="toc-title">文章目录</strong>
 		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-服务器的频率"><span class="toc-number">1.</span> <span class="toc-text">1 服务器的频率</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-控制频率的正确姿势"><span class="toc-number">2.</span> <span class="toc-text">2 控制频率的正确姿势</span></a></li></ol>
 		</div>
 		
@@ -125,7 +125,7 @@
 </blockquote>
 <p>这边比较常用到的是no_turbo这个开关，可以开关turbo，前提是BIOS已经enable了turbo功能。<br>在/sys/devices/system/cpu文件夹下面，有每个CPU的设置<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">cd /sys/devices/system/cpu/cpu</div><div class="line">cpu0/    cpu12/   cpu16/   cpu2/    cpu23/   cpu27/   cpu30/   cpu34/   cpu38/   cpu41/   cpu45/   cpu49/   cpu52/   cpu56/   cpu6/    cpu63/   cpu67/   cpu70/   cpu74/   cpu78/   cpu81/   cpu85/   cpufreq/</div><div class="line">cpu1/    cpu13/   cpu17/   cpu20/   cpu24/   cpu28/   cpu31/   cpu35/   cpu39/   cpu42/   cpu46/   cpu5/    cpu53/   cpu57/   cpu60/   cpu64/   cpu68/   cpu71/   cpu75/   cpu79/   cpu82/   cpu86/   cpuidle/</div><div class="line">cpu10/   cpu14/   cpu18/   cpu21/   cpu25/   cpu29/   cpu32/   cpu36/   cpu4/    cpu43/   cpu47/   cpu50/   cpu54/   cpu58/   cpu61/   cpu65/   cpu69/   cpu72/   cpu76/   cpu8/    cpu83/   cpu87/</div><div class="line">cpu11/   cpu15/   cpu19/   cpu22/   cpu26/   cpu3/    cpu33/   cpu37/   cpu40/   cpu44/   cpu48/   cpu51/   cpu55/   cpu59/   cpu62/   cpu66/   cpu7/    cpu73/   cpu77/   cpu80/   cpu84/   cpu9/</div></pre></td></tr></table></figure></p>
 <p>进到某个cpu thread里面可以看到也有cpufreq的文件夹，进入到cpufreq文件夹，可以看到如下一下参数：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">cd /sys/devices/system/cpu/cpu0/cpufreq/</div><div class="line">affected_cpus                cpuinfo_max_freq             cpuinfo_transition_latency   scaling_available_governors  scaling_driver               scaling_max_freq             scaling_setspeed</div><div class="line">cpuinfo_cur_freq             cpuinfo_min_freq             related_cpus                 scaling_cur_freq             scaling_governor             scaling_min_freq</div></pre></td></tr></table></figure></p>
-<p>控制frequency比较建议的做法是用cpupower这个linux kernel tool来控制，不容易改错参数。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">Usage:  cpupower [-d|--debug] [-c|--cpu cpulist ] &lt;command&gt; [&lt;args&gt;]</div><div class="line">Supported commands are:</div><div class="line">        frequency-info</div><div class="line">        frequency-set</div><div class="line">        idle-info</div><div class="line">        idle-set</div><div class="line">        set</div><div class="line">        info</div><div class="line">        monitor</div><div class="line">        help</div><div class="line"></div><div class="line">Not all commands can make use of the -c cpulist option.</div><div class="line"></div><div class="line">Use &apos;cpupower help &lt;command&gt;&apos; for getting help for above commands.</div></pre></td></tr></table></figure></p>
+<p>控制frequency建议的做法是用cpupower这个linux kernel tool来控制，不容易改错参数。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">Usage:  cpupower [-d|--debug] [-c|--cpu cpulist ] &lt;command&gt; [&lt;args&gt;]</div><div class="line">Supported commands are:</div><div class="line">        frequency-info</div><div class="line">        frequency-set</div><div class="line">        idle-info</div><div class="line">        idle-set</div><div class="line">        set</div><div class="line">        info</div><div class="line">        monitor</div><div class="line">        help</div><div class="line"></div><div class="line">Not all commands can make use of the -c cpulist option.</div><div class="line"></div><div class="line">Use &apos;cpupower help &lt;command&gt;&apos; for getting help for above commands.</div></pre></td></tr></table></figure></p>
 <p>主要用的设置命令是用的frequency-set这个指令，具体用法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div></pre></td><td class="code"><pre><div class="line">NAME</div><div class="line">       cpupower frequency-set - A small tool which allows to modify cpufreq settings.</div><div class="line"></div><div class="line">SYNTAX</div><div class="line">       cpupower [ -c cpu ] frequency-set [options]</div><div class="line"></div><div class="line">DESCRIPTION</div><div class="line">       cpupower frequency-set allows you to modify cpufreq settings without having to type e.g. &quot;/sys/devices/system/cpu/cpu0/cpufreq/scaling_set_speed&quot; all the time.</div><div class="line"></div><div class="line">OPTIONS</div><div class="line">       -d --min &lt;FREQ&gt;</div><div class="line">              new minimum CPU frequency the governor may select.</div><div class="line"></div><div class="line">       -u --max &lt;FREQ&gt;</div><div class="line">              new maximum CPU frequency the governor may select.</div><div class="line"></div><div class="line">       -g --governor &lt;GOV&gt;</div><div class="line">              new cpufreq governor.</div><div class="line"></div><div class="line">       -f --freq &lt;FREQ&gt;</div><div class="line">              specific frequency to be set. Requires userspace governor to be available and loaded.</div><div class="line"></div><div class="line">       -r --related</div><div class="line">              modify all hardware-related CPUs at the same time</div><div class="line"></div><div class="line">       REMARKS</div><div class="line"></div><div class="line">       By default values are applied on all cores. How to modify single core configurations is described in the cpupower(1) manpage in the --cpu option section.</div><div class="line"></div><div class="line">       The -f FREQ, --freq FREQ parameter cannot be combined with any other parameter.</div><div class="line"></div><div class="line">       FREQuencies can be passed in Hz, kHz (default), MHz, GHz, or THz by postfixing the value with the wanted unit name, without any space (frequency in kHz =^ Hz * 0.001 =^ MHz * 1000 =^ GHz * 1000000).</div><div class="line"></div><div class="line">       On Linux kernels up to 2.6.29, the -r or --related parameter is ignored.</div></pre></td></tr></table></figure></p>
   
 	</div>
@@ -172,21 +172,21 @@
 	
 <section class="comment">
 	
-	<div class="ds-thread" data-title="服务器server的频率知识整理" data-thread-key="Turbo和Intel_Pstate" data-author-key="Lina Pan" data-url="https://lynnapan.github.io/post/Turbo和Intel_Pstate"></div>
+	<div class="ds-thread" data-title="服务器server的频率知识整理" data-thread-key="Turbo和Intel_Pstate" data-author-key="Lina Pan(panlina_lynna@outlook.com)" data-url="https://lynnapan.github.io/post/Turbo和Intel_Pstate"></div>
 	
 </section>
 
 
 </div>  
-      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
 
   <div id="toc" class="toc-aside">
-  <strong class="toc-title">Contents</strong>
+  <strong class="toc-title">文章目录</strong>
   <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-服务器的频率"><span class="toc-number">1.</span> <span class="toc-text">1 服务器的频率</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-控制频率的正确姿势"><span class="toc-number">2.</span> <span class="toc-text">2 控制频率的正确姿势</span></a></li></ol>
   </div>
 
 <div id="asidepart">
-<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
 <aside class="clearfix">
 <div id="authorInfo">
 	
@@ -207,8 +207,10 @@
 
   
 <div class="categorieslist">
-	<p class="asidetitle">Categories</p>
+	<p class="asidetitle">分类</p>
 		<ul>
+		
+			<li><a href="/categories/C/" title="C">C<sup>1</sup></a></li>
 		
 			<li><a href="/categories/Data-Center/" title="Data Center">Data Center<sup>5</sup></a></li>
 		
@@ -231,7 +233,7 @@
   
 
   <div class="linkslist">
-  <p class="asidetitle">Links</p>
+  <p class="asidetitle">友情链接</p>
     <ul>
       <li><a href="http://julyhou24.org/" target="_blank" title="Hexo">一本正经地胡说八道</a></li>
     </ul>
@@ -242,7 +244,7 @@
 
 
   <div class="rsspart">
-	<a href="atom.xml" target="_blank" title="rss">RSS</a>
+	<a href="atom.xml" target="_blank" title="rss">RSS 订阅</a>
 </div>
 
   
@@ -256,7 +258,7 @@
     
             <p class="copyright"> © 2017 
 		
-		<a href="https://lynnapan.github.io" target="_blank" title="Lina Pan">Lina Pan</a>
+		<a href="https://lynnapan.github.io" target="_blank" title="Lina Pan(panlina_lynna@outlook.com)">Lina Pan(panlina_lynna@outlook.com)</a>
 		
 		</br>本站总访问量<span id="busuanzi_value_site_pv"></span>次，本站访客数<span id="busuanzi_value_site_uv"></span>人次，本文总阅读量<span id="busuanzi_value_page_pv"></span>次
 		</br>Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> && Theme by <a href="http://gengbiao.me" target="_blank" title="coney">coney</a>
