@@ -44,7 +44,7 @@
 				<h1 class="site-name"><a href="/" title="Lynna&#39;s Blog">Lynna&#39;s Blog</a></h1>
 				<a class="blog-motto">怕什么真理无穷， 进一寸有一寸的欢喜</a>
 			</div>
-			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
 			</a></div>
 			<nav class="animated">
 				<ul>
@@ -58,7 +58,7 @@
 					
                                             <form class="search" action=https://lynnapan.github.io/ target="_blank">
                                             <label>Search</label>
-                                        <input name="s" type="hidden" value= null ><input type="text" name="q" size="30" placeholder="搜索"><br>
+                                        <input name="s" type="hidden" value= null ><input type="text" name="q" size="30" placeholder="Search"><br>
 					
 					</li>
 				</ul>
@@ -80,7 +80,7 @@
     </p>
   <p class="article-time">
     <time datetime="2017-07-14T03:54:53.000Z" itemprop="datePublished">2017-07-14</time>
-    更新日期:<time datetime="2017-07-30T14:05:51.640Z" itemprop="dateModified">2017-07-30</time>
+    Updated:<time datetime="2017-07-30T14:05:51.640Z" itemprop="dateModified">2017-07-30</time>
     
   </p>
 </header>
@@ -88,7 +88,7 @@
 		
 		
 		<div id="toc" class="toc-article">
-			<strong class="toc-title">文章目录</strong>
+			<strong class="toc-title">Contents</strong>
 		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#redis主要的数据结构"><span class="toc-number">1.</span> <span class="toc-text">redis主要的数据结构</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#一-简单动态字符串"><span class="toc-number">1.0.1.</span> <span class="toc-text">一. 简单动态字符串</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-1-什么是简单动态字符串？"><span class="toc-number">1.0.1.1.</span> <span class="toc-text">1.1 什么是简单动态字符串？</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-SDS相对C字符串的好处？"><span class="toc-number">1.0.1.2.</span> <span class="toc-text">1.2 SDS相对C字符串的好处？</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#获取字符串长度复杂度为O-1"><span class="toc-number">1.0.1.2.1.</span> <span class="toc-text">获取字符串长度复杂度为O(1)</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#防止缓冲区溢出-buffer-overflow"><span class="toc-number">1.0.1.2.2.</span> <span class="toc-text">防止缓冲区溢出(buffer overflow)</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#减少因修改字符串带来的内存重分配次数"><span class="toc-number">1.0.1.2.3.</span> <span class="toc-text">减少因修改字符串带来的内存重分配次数</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#可以存放二进制数据"><span class="toc-number">1.0.1.2.4.</span> <span class="toc-text">可以存放二进制数据</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#总结"><span class="toc-number">1.0.2.</span> <span class="toc-text">总结</span></a></li></ol></li></ol></li></ol>
 		</div>
 		
@@ -271,15 +271,15 @@
 
 
 </div>  
-      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
 
   <div id="toc" class="toc-aside">
-  <strong class="toc-title">文章目录</strong>
+  <strong class="toc-title">Contents</strong>
   <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#redis主要的数据结构"><span class="toc-number">1.</span> <span class="toc-text">redis主要的数据结构</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#一-简单动态字符串"><span class="toc-number">1.0.1.</span> <span class="toc-text">一. 简单动态字符串</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-1-什么是简单动态字符串？"><span class="toc-number">1.0.1.1.</span> <span class="toc-text">1.1 什么是简单动态字符串？</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-SDS相对C字符串的好处？"><span class="toc-number">1.0.1.2.</span> <span class="toc-text">1.2 SDS相对C字符串的好处？</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#获取字符串长度复杂度为O-1"><span class="toc-number">1.0.1.2.1.</span> <span class="toc-text">获取字符串长度复杂度为O(1)</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#防止缓冲区溢出-buffer-overflow"><span class="toc-number">1.0.1.2.2.</span> <span class="toc-text">防止缓冲区溢出(buffer overflow)</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#减少因修改字符串带来的内存重分配次数"><span class="toc-number">1.0.1.2.3.</span> <span class="toc-text">减少因修改字符串带来的内存重分配次数</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#可以存放二进制数据"><span class="toc-number">1.0.1.2.4.</span> <span class="toc-text">可以存放二进制数据</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#总结"><span class="toc-number">1.0.2.</span> <span class="toc-text">总结</span></a></li></ol></li></ol></li></ol>
   </div>
 
 <div id="asidepart">
-<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
 <aside class="clearfix">
 <div id="authorInfo">
 	
@@ -300,7 +300,7 @@
 
   
 <div class="categorieslist">
-	<p class="asidetitle">分类</p>
+	<p class="asidetitle">Categories</p>
 		<ul>
 		
 			<li><a href="/categories/C/" title="C">C<sup>1</sup></a></li>
@@ -328,7 +328,7 @@
   
 
   <div class="linkslist">
-  <p class="asidetitle">友情链接</p>
+  <p class="asidetitle">Links</p>
     <ul>
       <li><a href="http://julyhou24.org/" target="_blank" title="Hexo">一本正经地胡说八道</a></li>
     </ul>
@@ -339,7 +339,7 @@
 
 
   <div class="rsspart">
-	<a href="atom.xml" target="_blank" title="rss">RSS 订阅</a>
+	<a href="atom.xml" target="_blank" title="rss">RSS</a>
 </div>
 
   
