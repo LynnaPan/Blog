@@ -82,7 +82,7 @@ Redis将在数据库中创建了一个新的键值对，">
     </p>
   <p class="article-time">
     <time datetime="2017-08-01T03:54:53.000Z" itemprop="datePublished">2017-08-01</time>
-    Updated:<time datetime="2017-08-04T06:29:54.903Z" itemprop="dateModified">2017-08-04</time>
+    Updated:<time datetime="2017-08-04T06:45:03.940Z" itemprop="dateModified">2017-08-04</time>
     
   </p>
 </header>
@@ -146,8 +146,10 @@ Redis将在数据库中创建了一个新的键值对，">
 <li><p>上一步得到哈希值假设为8，继续来计算index索引值：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">index = hash &amp; dict-&gt;ht[0].sizemask;</div></pre></td></tr></table></figure>
 </li>
+<li><p>这时得到的index为<code>8&amp;3=0</code>。因此这个键值对会被放置到哈希数组列表的索引0上。</p>
+</li>
 </ol>
-<p>这时得到的index为<code>8&amp;3=0</code>。因此这个键值对会被放置到哈希数组列表的索引0上，并且看到used的值变为1，操作后的字典如下图所示：<br><img src="/images/redis/7.png" alt=""></p>
+<p>操作后的字典如下图所示，并且看到used的值变为1：<br><img src="/images/redis/7.png" alt=""></p>
 <center>操作后的字典</center>
 
 <h3 id="redis的rehash"><a href="#redis的rehash" class="headerlink" title="redis的rehash"></a>redis的rehash</h3><p>随着操作的不断执行， 哈希表保存的键值对会逐渐地增多或者减少， 为了让哈希表的负载因子（load factor）维持在一个合理的范围之内， 当哈希表保存的键值对数量太多或者太少时， 程序需要对哈希表的大小进行相应的扩展或者收缩。<br>扩展和收缩哈希表的工作可以通过执行 rehash （重新散列）操作来完成， Redis 对字典的哈希表执行 rehash 的步骤如下：</p>
