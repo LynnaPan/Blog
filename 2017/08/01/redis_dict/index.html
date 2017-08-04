@@ -1,0 +1,493 @@
+
+ <!DOCTYPE HTML>
+<html >
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu_union_verify" content="d1952c66cf48912e21c18c7c581f382a">
+  <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
+<meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
+  
+    <title>阅读redis代码（二）—— Dict字典和哈希算法 | Lynna&#39;s Blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Lina Pan(panlina_lynna@outlook.com)">
+    
+    <meta name="description" content="字典是一种用来保存键值对（key-value)的抽象数据结构。
+redis中, 数据库底层就是用字典实现的，包括对数据库的增，删,改,查。
+比如上一篇文章提过的例子：12redis&amp;gt; SET msg &amp;quot;hello world&amp;quot;OK
+Redis将在数据库中创建了一个新的键值对">
+    
+    
+    
+    
+    <link rel="alternate" href="atom.xml" title="Lynna&#39;s Blog" type="application/atom+xml">
+    
+    
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <script>
+        var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            var _bdId ='391982416296a0d54221f59fe35250d4';
+             hm.src = "//hm.baidu.com/hm.js?" + _bdId;
+             var s = document.getElementsByTagName("script")[0]; 
+             s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+     
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="Lynna&#39;s Blog">Lynna&#39;s Blog</a></h1>
+				<a class="blog-motto">怕什么真理无穷， 进一寸有一寸的欢喜</a>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+					<li>
+					
+                                            <form class="search" action=https://lynnapan.github.io/ target="_blank">
+                                            <label>Search</label>
+                                        <input name="s" type="hidden" value= null ><input type="text" name="q" size="30" placeholder="Search"><br>
+					
+					</li>
+				</ul>
+                            </nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2017/08/01/redis_dict/" title="阅读redis代码（二）—— Dict字典和哈希算法" itemprop="url">阅读redis代码（二）—— Dict字典和哈希算法</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="https://lynnapan.github.io" title="Lina Pan(panlina_lynna@outlook.com)">Lina Pan(panlina_lynna@outlook.com)</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2017-08-01T03:54:53.000Z" itemprop="datePublished">2017-08-01</time>
+    Updated:<time datetime="2017-08-04T03:13:24.327Z" itemprop="dateModified">2017-08-04</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">Contents</strong>
+		<ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#redis中字典的实现"><span class="toc-number">1.</span> <span class="toc-text">redis中字典的实现</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#字典"><span class="toc-number">1.1.</span> <span class="toc-text">字典</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#哈希表"><span class="toc-number">1.2.</span> <span class="toc-text">哈希表</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#哈希表节点"><span class="toc-number">1.3.</span> <span class="toc-text">哈希表节点</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#redis中的哈希算法"><span class="toc-number">2.</span> <span class="toc-text">redis中的哈希算法</span></a></li></ol>
+		</div>
+		
+		<p>字典是一种用来保存键值对（key-value)的抽象数据结构。</p>
+<p>redis中, 数据库底层就是用字典实现的，包括对数据库的增，删,改,查。</p>
+<p>比如<a href="http://lynnapan.github.io/2017/07/14/redis%20code%20reading/">上一篇文章</a>提过的例子：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">redis&gt; SET msg &quot;hello world&quot;</div><div class="line">OK</div></pre></td></tr></table></figure></p>
+<p>Redis将在数据库中创建了一个新的键值对，这个键值对就是字典来实现的。</p>
+<p>除此之外，字典还是哈希键的底层实现之一： 当一个哈希键包含的键值对比较多， 又或者键值对中的元素都是比较长的字符串时， Redis 就会使用字典作为哈希键的底层实现。Redis 中每个 hash 可以存储 2e32 - 1 键值对（40多亿）。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">127.0.0.1:6379&gt;  HMSET runoobkey name &quot;redis tutorial&quot; description &quot;redis basic commands for caching&quot; likes 20 visitors 23000</div><div class="line">OK</div><div class="line">127.0.0.1:6379&gt;  HGETALL runoobkey</div><div class="line">1) &quot;name&quot;</div><div class="line">2) &quot;redis tutorial&quot;</div><div class="line">3) &quot;description&quot;</div><div class="line">4) &quot;redis basic commands for caching&quot;</div><div class="line">5) &quot;likes&quot;</div><div class="line">6) &quot;20&quot;</div><div class="line">7) &quot;visitors&quot;</div><div class="line">8) &quot;23000&quot;</div></pre></td></tr></table></figure></p>
+<h3 id="redis中字典的实现"><a href="#redis中字典的实现" class="headerlink" title="redis中字典的实现"></a>redis中字典的实现</h3><p>在redis中的字典是由哈希表来实现的。</p>
+<p>什么是哈希表？哈希表就是存放有很多哈希节点的表结构，一个哈希节点就保存了字典中的键值对。因此从上而下的结构关系是：<br><strong>字典 –&gt; 哈希表 –&gt; 哈希节点 –&gt; 字典的键值对</strong><br>那么就从代码中一一分析一下这三者的数据结构。</p>
+<h4 id="字典"><a href="#字典" class="headerlink" title="字典"></a>字典</h4><p>Redis 中的字典由 dict.h/dict 结构表示：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> dict &#123;</div><div class="line">    dictType *type;</div><div class="line">    <span class="keyword">void</span> *privdata;</div><div class="line">    dictht ht[<span class="number">2</span>];</div><div class="line">    <span class="keyword">long</span> rehashidx; <span class="comment">/* rehashing not in progress if rehashidx == -1 */</span></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> iterators; <span class="comment">/* number of iterators currently running */</span></div><div class="line">&#125; dict;</div></pre></td></tr></table></figure></p>
+<p>字典的属性成员有：</p>
+<ol>
+<li><p>type: 这是一个指针，指向dictType结构，每个 dictType 结构保存了一簇用于操作特定类型键值对的函数， Redis 会为用途不同的字典设置不同的类型特定函数。我们后面会用到到hashFunction这个函数。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> dictType &#123;</div><div class="line">    <span class="keyword">uint64_t</span> (*hashFunction)(<span class="keyword">const</span> <span class="keyword">void</span> *key);</div><div class="line">    <span class="keyword">void</span> *(*keyDup)(<span class="keyword">void</span> *privdata, <span class="keyword">const</span> <span class="keyword">void</span> *key);</div><div class="line">    <span class="keyword">void</span> *(*valDup)(<span class="keyword">void</span> *privdata, <span class="keyword">const</span> <span class="keyword">void</span> *obj);</div><div class="line">    <span class="keyword">int</span> (*keyCompare)(<span class="keyword">void</span> *privdata, <span class="keyword">const</span> <span class="keyword">void</span> *key1, <span class="keyword">const</span> <span class="keyword">void</span> *key2);</div><div class="line">    <span class="keyword">void</span> (*keyDestructor)(<span class="keyword">void</span> *privdata, <span class="keyword">void</span> *key);</div><div class="line">    <span class="keyword">void</span> (*valDestructor)(<span class="keyword">void</span> *privdata, <span class="keyword">void</span> *obj);</div><div class="line">&#125; dictType;</div></pre></td></tr></table></figure>
+</li>
+<li><p>private：私有数据，保存了需要传给类型函数的参数。</p>
+</li>
+<li>ht[2]: 哈希表，每个字典有两个哈希表， 一般情况下， 字典只使用 ht[0] 哈希表， ht[1] 哈希表只会在对 ht[0] 哈希表进行 rehash 时使用。</li>
+<li>rehashidx: rehash索引，当rehashidx==-1的时候，说明不在进行rehash。</li>
+<li>iterators: 记录当前的迭代次数</li>
+</ol>
+<h4 id="哈希表"><a href="#哈希表" class="headerlink" title="哈希表"></a>哈希表</h4><p>哈希表的数据结构定义在dict.h中的dictht:<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/* This is our hash table structure. Every dictionary has two of this as we</span></div><div class="line"> * implement incremental rehashing, for the old to the new table. */</div><div class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> dictht &#123;</div><div class="line">    dictEntry **table;</div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> size;</div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> sizemask;</div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> used;</div><div class="line">&#125; dictht;</div></pre></td></tr></table></figure></p>
+<p>哈希表的结构体属性成员有：</p>
+<ol>
+<li>**table: 哈希表数组，数组中的每个元素都是一个指向 dict.h/dictEntry 结构的指针， 每个 dictEntry 结构保存着一个键值对</li>
+<li>size：哈希表大小</li>
+<li>sizemask: 哈希表大小的掩码表示，总是等于size-1，这个属性和哈希值一起决定一个键应该被放到 table 数组的哪个索引上面</li>
+<li>used： 表示已经使用的节点数量</li>
+</ol>
+<h4 id="哈希表节点"><a href="#哈希表节点" class="headerlink" title="哈希表节点"></a>哈希表节点</h4><p>哈希表节点使用 dictEntry 结构表示， 每个 dictEntry 结构都保存着一个键值对。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> dictEntry &#123;</div><div class="line">    <span class="keyword">void</span> *key;</div><div class="line">    <span class="keyword">union</span> &#123;</div><div class="line">        <span class="keyword">void</span> *val;</div><div class="line">        <span class="keyword">uint64_t</span> u64;</div><div class="line">        <span class="keyword">int64_t</span> s64;</div><div class="line">        <span class="keyword">double</span> d;</div><div class="line">    &#125; v;</div><div class="line">    <span class="keyword">struct</span> dictEntry *next;</div><div class="line">&#125; dictEntry;</div></pre></td></tr></table></figure></p>
+<p>从代码可以看出，有key属性，保存着键，而v的共用体(union)保存键的值，可以是指针，也可以是uint64_t，int64_t整数，也可以是double值。<br>除此之外，还有next指针，指向下一个哈希表节点。这个指针可以将多个哈希值相同的键值对连接在一次， 以此来解决键冲突（collision）的问题。</p>
+<p>如下图所示是一个完整的字典，这个字典是处于普通状态（没有进行rehash）</p>
+<p><img src="/images/redis/5.png" alt=""></p>
+<center>图1</center>
+
+<h3 id="redis中的哈希算法"><a href="#redis中的哈希算法" class="headerlink" title="redis中的哈希算法"></a>redis中的哈希算法</h3><p>redis中当新建一个新的键值对(key-value pair)添加到字典中时，程序会根据键值对的key计算出哈希值和索引值，然后再根据索引值，将包含新建的键值对的哈希节点添加到哈希表中的指定索引位置上。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">define</span> dictHashKey(d, key) (d)-&gt;type-&gt;hashFunction(key)</span></div><div class="line"></div><div class="line">...</div><div class="line"><span class="keyword">static</span> <span class="keyword">int</span> <span class="number">_</span>dictKeyIndex(dict *d, <span class="keyword">const</span> <span class="keyword">void</span> *key, <span class="keyword">unsigned</span> <span class="keyword">int</span> hash, dictEntry **existing)</div><div class="line">&#123;</div><div class="line">...</div><div class="line">idx = hash &amp; d-&gt;ht[table].sizemask</div><div class="line">...</div><div class="line">&#125;</div><div class="line">...</div><div class="line"></div><div class="line">index = <span class="number">_</span>dictKeyIndex(d, key, dictHashKey(d,key), existing)</div></pre></td></tr></table></figure>
+<p>我们可以看一下实际的调用，当创建redis的database时，会调用<code>dbDictType</code>的指针，上面我们提到过，每个 dictType 结构保存了一簇用于操作特定类型键值对的函数。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> dictType &#123;</div><div class="line">    <span class="keyword">uint64_t</span> (*hashFunction)(<span class="keyword">const</span> <span class="keyword">void</span> *key);</div><div class="line">    <span class="keyword">void</span> *(*keyDup)(<span class="keyword">void</span> *privdata, <span class="keyword">const</span> <span class="keyword">void</span> *key);</div><div class="line">    <span class="keyword">void</span> *(*valDup)(<span class="keyword">void</span> *privdata, <span class="keyword">const</span> <span class="keyword">void</span> *obj);</div><div class="line">    <span class="keyword">int</span> (*keyCompare)(<span class="keyword">void</span> *privdata, <span class="keyword">const</span> <span class="keyword">void</span> *key1, <span class="keyword">const</span> <span class="keyword">void</span> *key2);</div><div class="line">    <span class="keyword">void</span> (*keyDestructor)(<span class="keyword">void</span> *privdata, <span class="keyword">void</span> *key);</div><div class="line">    <span class="keyword">void</span> (*valDestructor)(<span class="keyword">void</span> *privdata, <span class="keyword">void</span> *obj);</div><div class="line">&#125; dictType;</div></pre></td></tr></table></figure></p>
+<p>于是我们找到<code>dbDictType</code>的实例化不同的操作函数。关注第一个<code>hashFunction</code>的定义是<code>dictSdsHash</code>函数，这个函数实际调用<code>dictGenHashFunction</code>函数，这个通用哈希函数最终计算出一个哈希值。<br><img src="/images/redis/8.png" alt=""></p>
+<p>举个例子，假设我们要往一个如下图所示的空字典中新增一个键值对。size为4，sizemask为4-1=3。</p>
+<p><img src="/images/redis/6.png" alt=""></p>
+<center>空的字典</center>
+
+<p>hashFunction是dict中type的定义函数，因此如果要新增一个key-value,比如k0:v0到字典中去的时候，程序会做这样一些操作：</p>
+<ol>
+<li><p>计算k0的哈希值：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hash = dict-&gt;type-&gt;hashFunction(k0)</div></pre></td></tr></table></figure>
+</li>
+<li><p>上一步得到哈希值假设为8，继续来计算index索引值：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">index = hash &amp; dict-&gt;ht[0].sizemask;</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>这时得到的index为<code>8&amp;3=0</code>。因此这个键值对会被放置到哈希数组列表的索引0上，并且看到used的值变为1，操作后的字典如下图所示：<br><img src="/images/redis/7.png" alt=""></p>
+<center>操作后的字典</center>
+
+
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/C/">C</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="https://lynnapan.github.io/2017/08/01/redis_dict/" data-title="阅读redis代码（二）—— Dict字典和哈希算法 | Lynna&#39;s Blog" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2017/07/31/ML/"  title="machine learning week 3 -- Logistaic regression">
+ <strong>NEXT:</strong><br/> 
+ <span>machine learning week 3 -- Logistaic regression
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+<section class="comment">
+	
+	<div class="ds-thread" data-title="阅读redis代码（二）—— Dict字典和哈希算法" data-thread-key="redis_dict" data-author-key="Lina Pan(panlina_lynna@outlook.com)" data-url="https://lynnapan.github.io/post/redis_dict"></div>
+	
+</section>
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#redis中字典的实现"><span class="toc-number">1.</span> <span class="toc-text">redis中字典的实现</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#字典"><span class="toc-number">1.1.</span> <span class="toc-text">字典</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#哈希表"><span class="toc-number">1.2.</span> <span class="toc-text">哈希表</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#哈希表节点"><span class="toc-number">1.3.</span> <span class="toc-text">哈希表节点</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#redis中的哈希算法"><span class="toc-number">2.</span> <span class="toc-text">redis中的哈希算法</span></a></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+<div id="authorInfo">
+	
+		<div class="author-logo"></div>		
+	
+	<div class="social-list" class="clearfix">
+		
+		<a href="http://weibo.com/1912518851" target="_blank" title="weibo"></a>
+		
+		
+		
+		<a href="https://github.com/LynnaPan" target="_blank" title="github"></a>
+		
+		
+		
+	</div>
+</div>
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">Categories</p>
+		<ul>
+		
+			<li><a href="/categories/C/" title="C">C<sup>2</sup></a></li>
+		
+			<li><a href="/categories/Coding/" title="Coding">Coding<sup>0</sup></a></li>
+		
+			<li><a href="/categories/Data-Center/" title="Data Center">Data Center<sup>5</sup></a></li>
+		
+			<li><a href="/categories/Machine-Learning/" title="Machine Learning">Machine Learning<sup>2</sup></a></li>
+		
+			<li><a href="/categories/Mesos/" title="Mesos">Mesos<sup>0</sup></a></li>
+		
+			<li><a href="/categories/Python/" title="Python">Python<sup>1</sup></a></li>
+		
+			<li><a href="/categories/Web/" title="Web">Web<sup>1</sup></a></li>
+		
+			<li><a href="/categories/docker/" title="docker">docker<sup>1</sup></a></li>
+		
+			<li><a href="/categories/mssql-数据库/" title="mssql 数据库">mssql 数据库<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  
+
+  <div class="linkslist">
+  <p class="asidetitle">Links</p>
+    <ul>
+      <li><a href="http://julyhou24.org/" target="_blank" title="Hexo">一本正经地胡说八道</a></li>
+    </ul>
+    <ul>
+      <li><a href="http://www.litrin.net/" target="_blank" title="Hexo">开源小站</a></li>
+    </ul>
+</div>
+
+
+  <div class="rsspart">
+	<a href="atom.xml" target="_blank" title="rss">RSS</a>
+</div>
+
+  
+
+</aside>
+</div>
+    </div>
+    <footer><script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+<div id="footer" >
+    
+            <p class="copyright"> © 2017 
+		
+		<a href="https://lynnapan.github.io" target="_blank" title="Lina Pan(panlina_lynna@outlook.com)">Lina Pan(panlina_lynna@outlook.com)</a>
+		
+		</br>本站总访问量<span id="busuanzi_value_site_pv"></span>次，本站访客数<span id="busuanzi_value_site_uv"></span>人次，本文总阅读量<span id="busuanzi_value_page_pv"></span>次
+		</br>Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> && Theme by <a href="http://gengbiao.me" target="_blank" title="coney">coney</a>
+            </div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+<script type="text/javascript">
+  var duoshuoQuery = {short_name:"null"};
+  (function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = '//static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+    || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+</script> 
+
+
+
+
+
+
+<script>
+    
+        var _bdImg = '4';
+    
+    window._bd_share_config={
+        "common":{
+            "bdSnsKey":{
+
+            },
+            "bdText":"",
+            "bdMini":"2",
+            "bdMiniList":[
+                "qzone",
+                "tsina",
+                "weixin",
+                "renren",
+                "tqq",
+                "tieba",
+                "douban",
+                "sqq",
+                "diandian",
+                "huaban",
+                "youdao",
+                "mail",
+                "ty",
+                "fbook",
+                "twi",
+                "linkedin",
+                "copy",
+                "print"
+            ],
+            "bdPic":"",
+            "bdStyle":"0",
+            "bdSize":"16"
+        },
+        "slide":{
+            "type":"slide",
+            "bdImg":_bdImg,
+            "bdPos":"right",
+            "bdTop":"350"
+        },
+        "image":{
+            "viewList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ],
+            "viewText":"分享：",
+            "viewSize":"16"
+        },
+        "selectShare":{
+            "bdContainerClass":null,
+            "bdSelectMiniList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ]
+        }
+    };
+    with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+
+
+
+
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+ga('create', 'null', 'null');  
+ga('send', 'pageview');
+</script>
+
+
+  </body>
+</html>
+
