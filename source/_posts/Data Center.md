@@ -4,7 +4,7 @@ date:   2016-07-13 19:10:53 +0800
 categories: Data Center
 ---
 ## WSC简介
-
+![](/images/cache1.png)
 今天把Google的《The Datacenter as a Computer》看了一遍，它介绍了谷歌的一种数据中心类型——Warehouse-scale computers(WSC)。 
 
 那么这种类型的数据中心跟传统的数据中心有什么区别呢？
