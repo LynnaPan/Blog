@@ -1,0 +1,481 @@
+
+ <!DOCTYPE HTML>
+<html >
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu_union_verify" content="d1952c66cf48912e21c18c7c581f382a">
+  <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
+<meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
+  
+    <title>实景图像的人脸识别方法 | Lynna&#39;s Blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Lina Pan(panlina_lynna@outlook.com)">
+    
+    <meta name="description" content="人脸识别系统一般需要在校准好的特定情景下捕捉并处理图像。然而，现实生活中情况千变万化，有不同的角度，不同表情以及光照条件。传统的人脸识别算法在处理这种图像时就显得捉襟见肘。这里展示一种用于在现实场景中的人脸识别方法，这种方法只需要很少的训练样本就可以高效地训练。我们的方法包含了一个创新的校准流程和稀">
+    
+    
+    
+    
+    <link rel="alternate" href="atom.xml" title="Lynna&#39;s Blog" type="application/atom+xml">
+    
+    
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <script>
+        var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            var _bdId ='391982416296a0d54221f59fe35250d4';
+             hm.src = "//hm.baidu.com/hm.js?" + _bdId;
+             var s = document.getElementsByTagName("script")[0]; 
+             s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+     
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="Lynna&#39;s Blog">Lynna&#39;s Blog</a></h1>
+				<a class="blog-motto">怕什么真理无穷， 进一寸有一寸的欢喜</a>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+					<li>
+					
+                                            <form class="search" action=https://lynnapan.github.io/ target="_blank">
+                                            <label>Search</label>
+                                        <input name="s" type="hidden" value= null ><input type="text" name="q" size="30" placeholder="Search"><br>
+					
+					</li>
+				</ul>
+                            </nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2017/04/19/FACE RECOGNITION IN REAL-WORLD IMAGES/" title="实景图像的人脸识别方法" itemprop="url">实景图像的人脸识别方法</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="https://lynnapan.github.io" title="Lina Pan(panlina_lynna@outlook.com)">Lina Pan(panlina_lynna@outlook.com)</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2017-04-19T05:10:53.000Z" itemprop="datePublished">2017-04-19</time>
+    Updated:<time datetime="2017-04-19T13:17:09.138Z" itemprop="dateModified">2017-04-19</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">Contents</strong>
+		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#一．自动脸部校准"><span class="toc-number">1.</span> <span class="toc-text">一．自动脸部校准</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#二．脸部识别"><span class="toc-number">2.</span> <span class="toc-text">二．脸部识别</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#三．实验结果"><span class="toc-number">3.</span> <span class="toc-text">三．实验结果</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结论"><span class="toc-number">4.</span> <span class="toc-text">结论</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Github"><span class="toc-number">5.</span> <span class="toc-text">Github</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#安装"><span class="toc-number">5.1.</span> <span class="toc-text">安装</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#数据集"><span class="toc-number">5.2.</span> <span class="toc-text">数据集</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#运行脸部识别器"><span class="toc-number">5.3.</span> <span class="toc-text">运行脸部识别器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#参考文献"><span class="toc-number">5.4.</span> <span class="toc-text">参考文献</span></a></li></ol></li></ol>
+		</div>
+		
+		<p>人脸识别系统一般需要在校准好的特定情景下捕捉并处理图像。然而，现实生活中情况千变万化，有不同的角度，不同表情以及光照条件。传统的人脸识别算法在处理这种图像时就显得捉襟见肘。这里展示一种用于在现实场景中的人脸识别方法，这种方法只需要很少的训练样本就可以高效地训练。我们的方法包含了一个创新的校准流程和稀疏表示法分类器。这个方法在一个复杂的实景人脸数据集中的识别率，远远超过了当前的最先进技术。</p>
+<p>这是一种非常高效高精度的算法，可以在复杂的现实场景中识别人脸。最初的人脸识别算法只用于检测脸上的五官，比如捕捉眼睛嘴巴等。后来，人们提出了新的方法，比如用主分量分析（PCA），稀疏表示法分类器（SRC），以及后面提出的算法MSPCPC/PCPC。最近几年开始比较流行使用深度学习方法来进行人脸识别，这些算法识别率固然好，但都需要有相当量的数据和特定硬件来训练和使用。<br>作者提出的算法采用改良版的鲁棒稀疏编码(RSC)算法。由于RSC算法需要线型组合的训练样本，也就是每张图像都是相似大小，高校准，纯正面的，所以用RSC算法前需要进行自动脸部校准的预处理。</p>
+<h2 id="一．自动脸部校准"><a href="#一．自动脸部校准" class="headerlink" title="一．自动脸部校准"></a>一．自动脸部校准</h2><p>预处理的目的是对照参考图像，把输入的脸部进行网格变形。步骤是1. 采用Viola-Jones方法在图片中探测到脸；2. 用回归树方法探测脸部标记；3. 计算Delaunay三角剖分网格；4. 最后就可以利用仿射变换将网格中的点对应到参考图像的点，进行一系列列转换，缩放和变形，最终得到校准的图像。<br><img src="/images/face/1.png" alt=""></p>
+<p><center>图1</center></p>
+<h2 id="二．脸部识别"><a href="#二．脸部识别" class="headerlink" title="二．脸部识别"></a>二．脸部识别</h2><p>脸部识别算法采用修改版的RSC，是SRC方法的改良算法。SRC方法是创建一个包含所有训练图像的字典矩阵D，对于一张位置的图像y，目标就是需要找到一个向量的权重x使得y=Dx。用x的L1范数作为正则化项，x必须要是一个稀疏矩阵。<br>RSC与SRC的区别是，RSC采用一个对角线权重矩阵W来提高对于光照变化的适应性和健壮性，并且采用了最大似然估计来解决稀疏编码带来的问题。综上，RSC算法解决了加权套索问题：<br><img src="/images/face/2.png" alt=""><br>这里ε是一个表示噪声等级的常量。如果我们用L2范数代替L1范数，我们会得到最小二乘问题:<br><img src="/images/face/3.png" alt=""><br>当<code>λ &gt; 0</code>，可以得到分析解<br><img src="/images/face/4.png" alt=""><br>        虽然这个方法需要转换<code>#（训练样本数）× #（训练样本数）</code>大小的矩阵，但比L1范数版本的算法会高效得多。</p>
+<h2 id="三．实验结果"><a href="#三．实验结果" class="headerlink" title="三．实验结果"></a>三．实验结果</h2><p>在高校准的AR数据集中，作者的算法达到了95%的识别率。为了跟现今流行的方法比较，在实验中作者采用了更有挑战性的包含13000张5749个人在不同环境下的图像数据库，用LFWa版本的数据集，选取了7张图像做训练，3张图像用于测试，设计了3个实验：</p>
+<ol>
+<li>在原始LFWa数据集上应用RSC算法</li>
+<li>在预先有脸部探测到的LFWa图像上应用RSC算法</li>
+<li>在进行了校准步骤的LFWa图像上应用改良版的RSC算法。</li>
+</ol>
+<p>数据集中的一些图像如下图（a）中，没有很好的校准。<br><img src="/images/face/8.PNG" alt=""><br>3个实验的结果如下<br><img src="/images/face/5.png" alt=""><br>除此之外，作者还采用只有2个和5个训练样本，与当下最领先的方法进行了比较得到了如下结果：<br><img src="/images/face/6.png" alt=""><br>最后，作者还做了每个人仅有一张训练图像的实验，得到了如下结果：<br><img src="/images/face/7.png" alt=""><br>以上实验结果显示，文中的方法可以在近实时下比别的算法有更好的识别率。虽然深度学习方法可以在LFW数据集中有高达96%的识别率，但这些算法都需要大量（300000张）样本和强大的硬件来运算。文中的方法可以有相对精确的识别率，却只使用少于10张训练样本，因此非常高效。</p>
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>我们介绍了一种可以用于实景图像下非常高效的脸部识别技术，只需要少于10张训练样本和普通的硬件就可以得到近似实时的识别效果。相比于现今比较流行的方法，在计算运行时减半之际，我们的算法几乎可以达到两倍的识别率。在LFW数据集中的实验结果表明，我们的方法远远超过了现有的非深度学习算法。</p>
+<h2 id="Github"><a href="#Github" class="headerlink" title="Github"></a>Github</h2><h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><ul>
+<li><p>安装一些python安装包:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">pip install numpy scipy Pillow l1ls sklearn matplotlib</div></pre></td></tr></table></figure>
+</li>
+<li><p>你还需要python的OpenCV。这是一种安装方法：可以用以下 cmake 命令:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">cmake -D WITH_TBB=ON -D BUILD_NEW_PYTHON_SUPPORT=ON -D INSTALL_C_EXAMPLES=ON -D INSTALL_PYTHON_EXAMPLES=ON -D BUILD_EXAMPLES=ON  -D WITH_OPENGL=ON -D WITH_VTK=ON -D WITH_GTK=ON -D WITH_CUDA=OFF ..</div></pre></td></tr></table></figure>
+</li>
+<li><p>别忘了其他一些依赖包:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt-get install libopenblas-dev</div></pre></td></tr></table></figure>
+</li>
+<li><p>从Boost官方网站下载Boost，然后进入boost目录，运行一下命令：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">./bootstrap.sh --with-libraries=python</div><div class="line">./b2</div><div class="line">sudo ./b2 install</div></pre></td></tr></table></figure>
+</li>
+<li><p>然后下载 DLIB:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">git clone https://github.com/davisking/dlib.git</div><div class="line">git checkout tags/v19.0 # current version did not work for me</div><div class="line">sudo python setup.py install</div><div class="line">export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib</div></pre></td></tr></table></figure>
+</li>
+<li><p>在 <code>config.py</code> 文件中修改 <code>haarcascade_frontalface_default.xml</code> 和 <code>the shape_predictor_68_face_landmarks.dat</code> 文件的路径。</p>
+<h3 id="数据集"><a href="#数据集" class="headerlink" title="数据集"></a>数据集</h3><p>为了能够比较与其他算法的结果，我采用LFW数据集的LFWa版本。可以用如下命令下载：</p>
+<figure class="highlight plain"><figcaption><span>http://www.openu.ac.il/home/hassner/data/lfwa/lfwa.tar.gz</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">tar xvfz lfwa.tar.gz</div><div class="line">cp -R lfw2 &lt;directory-to-store-dataset&gt;/.</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>在<code>config.py</code>中修改<code>lfw2</code>文件夹的路径。</p>
+<h3 id="运行脸部识别器"><a href="#运行脸部识别器" class="headerlink" title="运行脸部识别器"></a>运行脸部识别器</h3><p>运行 <code>python recognizer.py</code> 来运行论文中的代码。你可以在<code>config.py</code>中修改参数（比如训练样本的数量）。你只需要修改这个文件，其余可原封不动。</p>
+<h3 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h3><p>[1] Yang, M., Zhang, L., Yang, J., &amp; Zhang, D. (2011, June). Robust sparse coding for face recognition. In Computer Vision and Pattern Recognition (CVPR), 2011 IEEE Conference on (pp. 625-632). IEEE.</p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Machine-Learning/">Machine Learning</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="https://lynnapan.github.io/2017/04/19/FACE RECOGNITION IN REAL-WORLD IMAGES/" data-title="实景图像的人脸识别方法 | Lynna&#39;s Blog" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2017/04/19/distributed cache/" title="分布式缓存cache漫谈">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  分布式缓存cache漫谈</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2017/04/18/understand Cache/"  title="Cache缓存知识梳理">
+ <strong>NEXT:</strong><br/> 
+ <span>Cache缓存知识梳理
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+<section class="comment">
+	
+	<div class="ds-thread" data-title="实景图像的人脸识别方法" data-thread-key="FACE RECOGNITION IN REAL-WORLD IMAGES" data-author-key="Lina Pan(panlina_lynna@outlook.com)" data-url="https://lynnapan.github.io/post/FACE RECOGNITION IN REAL-WORLD IMAGES"></div>
+	
+</section>
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#一．自动脸部校准"><span class="toc-number">1.</span> <span class="toc-text">一．自动脸部校准</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#二．脸部识别"><span class="toc-number">2.</span> <span class="toc-text">二．脸部识别</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#三．实验结果"><span class="toc-number">3.</span> <span class="toc-text">三．实验结果</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结论"><span class="toc-number">4.</span> <span class="toc-text">结论</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Github"><span class="toc-number">5.</span> <span class="toc-text">Github</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#安装"><span class="toc-number">5.1.</span> <span class="toc-text">安装</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#数据集"><span class="toc-number">5.2.</span> <span class="toc-text">数据集</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#运行脸部识别器"><span class="toc-number">5.3.</span> <span class="toc-text">运行脸部识别器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#参考文献"><span class="toc-number">5.4.</span> <span class="toc-text">参考文献</span></a></li></ol></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+<div id="authorInfo">
+	
+		<div class="author-logo"></div>		
+	
+	<div class="social-list" class="clearfix">
+		
+		<a href="http://weibo.com/1912518851" target="_blank" title="weibo"></a>
+		
+		
+		
+		<a href="https://github.com/LynnaPan" target="_blank" title="github"></a>
+		
+		
+		
+	</div>
+</div>
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">Categories</p>
+		<ul>
+		
+			<li><a href="/categories/C/" title="C">C<sup>2</sup></a></li>
+		
+			<li><a href="/categories/Coding/" title="Coding">Coding<sup>0</sup></a></li>
+		
+			<li><a href="/categories/Data-Center/" title="Data Center">Data Center<sup>5</sup></a></li>
+		
+			<li><a href="/categories/Machine-Learning/" title="Machine Learning">Machine Learning<sup>2</sup></a></li>
+		
+			<li><a href="/categories/Mesos/" title="Mesos">Mesos<sup>0</sup></a></li>
+		
+			<li><a href="/categories/Python/" title="Python">Python<sup>1</sup></a></li>
+		
+			<li><a href="/categories/Web/" title="Web">Web<sup>1</sup></a></li>
+		
+			<li><a href="/categories/docker/" title="docker">docker<sup>1</sup></a></li>
+		
+			<li><a href="/categories/mssql-数据库/" title="mssql 数据库">mssql 数据库<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  
+
+  <div class="linkslist">
+  <p class="asidetitle">Links</p>
+    <ul>
+      <li><a href="http://julyhou24.org/" target="_blank" title="Hexo">一本正经地胡说八道</a></li>
+    </ul>
+    <ul>
+      <li><a href="http://www.litrin.net/" target="_blank" title="Hexo">开源小站</a></li>
+    </ul>
+</div>
+
+
+  <div class="rsspart">
+	<a href="atom.xml" target="_blank" title="rss">RSS</a>
+</div>
+
+  
+
+</aside>
+</div>
+    </div>
+    <footer><script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+<div id="footer" >
+    
+            <p class="copyright"> © 2017 
+		
+		<a href="https://lynnapan.github.io" target="_blank" title="Lina Pan(panlina_lynna@outlook.com)">Lina Pan(panlina_lynna@outlook.com)</a>
+		
+		</br>本站总访问量<span id="busuanzi_value_site_pv"></span>次，本站访客数<span id="busuanzi_value_site_uv"></span>人次，本文总阅读量<span id="busuanzi_value_page_pv"></span>次
+		</br>Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> && Theme by <a href="http://gengbiao.me" target="_blank" title="coney">coney</a>
+            </div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+<script type="text/javascript">
+  var duoshuoQuery = {short_name:"null"};
+  (function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = '//static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+    || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+</script> 
+
+
+
+
+
+
+<script>
+    
+        var _bdImg = '4';
+    
+    window._bd_share_config={
+        "common":{
+            "bdSnsKey":{
+
+            },
+            "bdText":"",
+            "bdMini":"2",
+            "bdMiniList":[
+                "qzone",
+                "tsina",
+                "weixin",
+                "renren",
+                "tqq",
+                "tieba",
+                "douban",
+                "sqq",
+                "diandian",
+                "huaban",
+                "youdao",
+                "mail",
+                "ty",
+                "fbook",
+                "twi",
+                "linkedin",
+                "copy",
+                "print"
+            ],
+            "bdPic":"",
+            "bdStyle":"0",
+            "bdSize":"16"
+        },
+        "slide":{
+            "type":"slide",
+            "bdImg":_bdImg,
+            "bdPos":"right",
+            "bdTop":"350"
+        },
+        "image":{
+            "viewList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ],
+            "viewText":"分享：",
+            "viewSize":"16"
+        },
+        "selectShare":{
+            "bdContainerClass":null,
+            "bdSelectMiniList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ]
+        }
+    };
+    with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+
+
+
+
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+ga('create', 'null', 'null');  
+ga('send', 'pageview');
+</script>
+
+
+  </body>
+</html>
+

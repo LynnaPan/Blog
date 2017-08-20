@@ -7,13 +7,15 @@
   <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
 <meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
   
-    <title>Turbo 和 Intel Pstate | Lynna&#39;s Blog</title>
+    <title>服务器server的频率知识整理 | Lynna&#39;s Blog</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
-    <meta name="author" content="Lina Pan">
+    <meta name="author" content="Lina Pan(panlina_lynna@outlook.com)">
     
-    <meta name="description" content="关于Turbo最近在做Turbo相关的控制，整理一下知识。
-Turbo就是我们所说的超频。什么叫超频，顾名思义，就是超出某个频率。对于CPU，有一个标称频率（Base Freqency)。比如某台服务器的CPU的Base Freqency是3.0GHz，也就是在普通状态下，BIOS关闭Turbo开关">
+    <meta name="description" content="最近在做Turbo相关的控制，整理一下知识。
+1 服务器的频率当我们在讨论服务器的频率时，我们怎么沟通？工程师经常挂在嘴边：“这台机器P1频率是多少？P0n是多少？”
+这里的P1频率，P0n频率，是什么意思呢？刚开始接触的时候会有点糊涂，不过理一下还是很容易理解的。如下图所示：
+对于CPU，有一个标">
     
     
     
@@ -73,15 +75,15 @@ Turbo就是我们所说的超频。什么叫超频，顾名思义，就是超出
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2016/12/15/Turbo和Intel_Pstate/" title="Turbo 和 Intel Pstate" itemprop="url">Turbo 和 Intel Pstate</a>
+      <a href="/2016/12/15/Turbo和Intel_Pstate/" title="服务器server的频率知识整理" itemprop="url">服务器server的频率知识整理</a>
   </h1>
   <p class="article-author">By
     
-      <a href="https://lynnapan.github.io" title="Lina Pan">Lina Pan</a>
+      <a href="https://lynnapan.github.io" title="Lina Pan(panlina_lynna@outlook.com)">Lina Pan(panlina_lynna@outlook.com)</a>
     </p>
   <p class="article-time">
     <time datetime="2016-12-15T11:10:53.000Z" itemprop="datePublished">2016-12-15</time>
-    Updated:<time datetime="2016-12-15T13:08:02.569Z" itemprop="dateModified">2016-12-15</time>
+    Updated:<time datetime="2017-05-12T07:14:34.140Z" itemprop="dateModified">2017-05-12</time>
     
   </p>
 </header>
@@ -90,17 +92,41 @@ Turbo就是我们所说的超频。什么叫超频，顾名思义，就是超出
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#关于Turbo"><span class="toc-number">1.</span> <span class="toc-text">关于Turbo</span></a></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-服务器的频率"><span class="toc-number">1.</span> <span class="toc-text">1 服务器的频率</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-控制频率的正确姿势"><span class="toc-number">2.</span> <span class="toc-text">2 控制频率的正确姿势</span></a></li></ol>
 		</div>
 		
-		<h2 id="关于Turbo"><a href="#关于Turbo" class="headerlink" title="关于Turbo"></a>关于Turbo</h2><p>最近在做Turbo相关的控制，整理一下知识。</p>
-<p>Turbo就是我们所说的超频。什么叫超频，顾名思义，就是超出某个频率。对于CPU，有一个标称频率（Base Freqency)。比如某台服务器的CPU的Base Freqency是3.0GHz，也就是在普通状态下，BIOS关闭Turbo开关的话， CPU的最高频率不会超过3.0GHz。聊到频率，就不得不提，Intel的频率控制driver——Intel Pstate。这个driver是集成在内核（kernel）中的。摘取一段官方对pstate的解释：<br>What is a P-state?</p>
-<p>When someone refers to a P-state, generally only the frequency is talked about. For example, on my Intel® Core™ processor, P0 is 2.3 GHz, and P1 is 980 MHz. In truth, a P-state is both a frequency and voltage operating point. Both are scaled as the P-state increases. </p>
-<p>Intel Pstate中有丰富的频率控制算法，让CPU的频率对不同的设置，不同的业务和需求，有着出不同的表现。有兴趣的同学可以研究一下kernel中pstate driver的代码。<br>Pstate控制频率范围不仅依赖硬件，也依赖系统中的参数设置。我们平常用来沟通时说这是P1频率，这是Pn频率，是什么意思呢？刚开始接触的时候会有点糊涂，不过理一下还是很容易理解的。如下图所示：<br><img src="/images/pn.png" alt=""></p>
-<p>最左边的是Pn，指的是硬件上的最低频率，P1是上文有提过的Base Frequency。在这范围的频率就是P1，P2， P3…Pn，后面的数字越小，就说明频率越高。那么P1以上的频率就称为Turbo频率，P0就是Turbo的最高频率。关于linux中频率的查看，可以采用自带的turbostat工具。通过这个工具，你可以看到很多频率的相关信息。<br><img src="/images/turbosetting.png" alt=""><br><img src="/images/turbofreq.png" alt=""></p>
-<p>假设服务器上部署了两种业务，一种是典型业务，一种是需求比较高的业务。通常的，长时间内服务器是跑典型业务，但偶尔来几个高需求业务，服务器就表示，哎呀哎呀，频率不够用呀。那怎么办呢？花钱买更好的服务器咯~</p>
-<p>还有一种办法，打开Turbo。在Intel最新一代的处理器上，打开Turbo可以提高10%~20%（甚至更多）的峰值性能提升。如果只是打开Turbo，然后随意跑你的业务的话，频率会根据你的业务，机会性（by opportunity)地增加到Turbo频率。因此，对Turbo有种误解是，Turbo只能在“超高”性能上维持非常短的一段时间，实则不然。除了达到一些thermal的极限条件，正确使用的话，CPU还是可以在turbo频率范围内的某个频率维持着，甚至可以让某单个core维持更高的频率。如果对这块有需求，建议寻找Intel的专业支持。</p>
-<p>后续持续更新……</p>
+		<p>最近在做Turbo相关的控制，整理一下知识。</p>
+<h2 id="1-服务器的频率"><a href="#1-服务器的频率" class="headerlink" title="1 服务器的频率"></a>1 服务器的频率</h2><p>当我们在讨论服务器的频率时，我们怎么沟通？工程师经常挂在嘴边：“这台机器P1频率是多少？P0n是多少？”</p>
+<p>这里的P1频率，P0n频率，是什么意思呢？刚开始接触的时候会有点糊涂，不过理一下还是很容易理解的。如下图所示：<br><img src="/images/pn.png" alt=""></p>
+<p>对于CPU，有一个标称频率（Base Freqency)。比如某台服务器的CPU的Base Freqency是3.0GHz，也就是在普通状态下，BIOS关闭Turbo开关的话， CPU的最高频率不会超过3.0GHz。最左边的是Pn，指的是硬件上的最低频率，P1是上文有提过的Base Frequency。在这范围的频率就是P1，P2， P3…Pn，后面的数字越小，就说明频率越高。那么P1以上的频率就称为Turbo频率，P0就是Turbo的最高频率。Turbo就是我们所说的超频。什么叫超频，顾名思义，就是超出标称频率。《energy efficiency server》一书中对turbo的定义如下：</p>
+<blockquote>
+<p>Turbo is a feature that allows those workloads to run at higher frequencies while staying within the thermal and electrical specifications of the processor.</p>
+</blockquote>
+<p>聊到频率，就不得不提，Intel的频率控制driver——Intel Pstate。这个driver是集成在内核（kernel）中的。摘取一段官方对pstate的解释：</p>
+<blockquote>
+<p>What is a P-state?<br>When someone refers to a P-state, generally only the frequency is talked about. For example, on my Intel® Core™ processor, P0 is 2.3 GHz, and P1 is 980 MHz. In truth, a P-state is both a frequency and voltage operating point. Both are scaled as the P-state increases. </p>
+</blockquote>
+<p>Intel Pstate 是Linux kernel中调节频率的driver，对于现代的CPU，一般都是采用intel_pstate driver, 这个driver在Sandy Bridge（以及以后的CPU）开始启用。它有丰富的频率控制算法，让CPU的频率对不同的设置，不同的业务和需求，有着出不同的表现。在用户态（user space）可以采用cpupower等频率策略调整工具进行一些高级配置。有兴趣的同学可以研究一下kernel中pstate driver的代码。Pstate控制频率范围不仅依赖硬件，也依赖系统中的参数设置。关于linux中频率的查看，可以采用自带的turbostat工具。通过这个工具，你可以看到很多频率的相关信息。<br><img src="/images/turbosetting.PNG" alt=""><br><img src="/images/turbofreq.PNG" alt=""></p>
+<p>CPU的频率不仅受CPU本身的逻辑控制，还跟power和thermal的限制有关。购买CPU的时候，你可能会注意到有一个指标叫TDP(thermal design point)。</p>
+<blockquote>
+<p>The TDP specifies the amount of power that the CPU can consume, running a commercially available worst-case SSE application over a significant period of time and therefore the amount of heat that the platform designer must be able to remove in order to avoid thermal throttling conditions. </p>
+</blockquote>
+<p>默认情况下，如果系统的power达到TDP，CPU的频率就会被限制以保护CPU的温度和功耗不过高。</p>
+<p>当我们购买服务器部署业务的时候，都希望能够把服务器的性能压榨到极致，并且服务器又稳定不出错。假设服务器上部署了两种业务，一种是典型业务，一种是需求比较高的业务。通常的，长时间内服务器是跑典型业务，但偶尔来几个高需求业务，服务器就表示，哎呀哎呀，频率不够用呀。那怎么办呢？要么花钱升级服务器，要么有另一种办法，打开Turbo。在Intel最新一代的处理器上，打开Turbo可以提高10%~20%（甚至更多）的峰值性能提升。如果只是打开Turbo，然后随意跑你的业务的话，频率会根据你的业务，机会性（by opportunity)地增加到Turbo频率。因此，对Turbo有种误解是，Turbo只能在“超高”性能上维持非常短的一段时间，实则不然。除了达到一些thermal的极限条件，正确使用的话，CPU还是可以在turbo频率范围内的某个频率维持着，甚至可以让某单个core维持更高的频率。</p>
+<h2 id="2-控制频率的正确姿势"><a href="#2-控制频率的正确姿势" class="headerlink" title="2 控制频率的正确姿势"></a>2 控制频率的正确姿势</h2><p>在控制频率之前，首先要认清自己的机器上正在使用的cpufreq控制器是哪个driver。<br>intel_pstate 的kernel sys fs在/sys/devices/system/cpu/intel_pstate, 如果有这个文件夹，说明kernel启用了intel_pstate driver。</p>
+<p>intel_pstate文件夹下有几个参数：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">cd /sys/devices/system/cpu/intel_pstate/</div><div class="line">max_perf_pct  min_perf_pct  no_turbo      num_pstates   turbo_pct</div></pre></td></tr></table></figure></p>
+<p>他们的作用可以查看kernel的解释，这几个接口定义如下：</p>
+<blockquote>
+<p>max_perf_pct: Limits the maximum P-State that will be requested by<br>the driver. It states it as a percentage of the available performance. The<br>available (P-State) performance may be reduced by the no_turbo<br>setting described below.</p>
+<p>min_perf_pct: Limits the minimum P-State that will be requested by<br>the driver. It states it as a percentage of the max (non-turbo)<br>performance level.</p>
+<p>no_turbo: Limits the driver to selecting P-State below the turbo<br>frequency range.</p>
+<p>turbo_pct: Displays the percentage of the total performance that<br>is supported by hardware that is in the turbo range. This number<br>is independent of whether turbo has been disabled or not.</p>
+<p>num_pstates: Displays the number of P-States that are supported<br>by hardware. This number is independent of whether turbo has<br>been disabled or not.</p>
+</blockquote>
+<p>这边比较常用到的是no_turbo这个开关，可以开关turbo，前提是BIOS已经enable了turbo功能。<br>在/sys/devices/system/cpu文件夹下面，有每个CPU的设置<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">cd /sys/devices/system/cpu/cpu</div><div class="line">cpu0/    cpu12/   cpu16/   cpu2/    cpu23/   cpu27/   cpu30/   cpu34/   cpu38/   cpu41/   cpu45/   cpu49/   cpu52/   cpu56/   cpu6/    cpu63/   cpu67/   cpu70/   cpu74/   cpu78/   cpu81/   cpu85/   cpufreq/</div><div class="line">cpu1/    cpu13/   cpu17/   cpu20/   cpu24/   cpu28/   cpu31/   cpu35/   cpu39/   cpu42/   cpu46/   cpu5/    cpu53/   cpu57/   cpu60/   cpu64/   cpu68/   cpu71/   cpu75/   cpu79/   cpu82/   cpu86/   cpuidle/</div><div class="line">cpu10/   cpu14/   cpu18/   cpu21/   cpu25/   cpu29/   cpu32/   cpu36/   cpu4/    cpu43/   cpu47/   cpu50/   cpu54/   cpu58/   cpu61/   cpu65/   cpu69/   cpu72/   cpu76/   cpu8/    cpu83/   cpu87/</div><div class="line">cpu11/   cpu15/   cpu19/   cpu22/   cpu26/   cpu3/    cpu33/   cpu37/   cpu40/   cpu44/   cpu48/   cpu51/   cpu55/   cpu59/   cpu62/   cpu66/   cpu7/    cpu73/   cpu77/   cpu80/   cpu84/   cpu9/</div></pre></td></tr></table></figure></p>
+<p>进到某个cpu thread里面可以看到也有cpufreq的文件夹，进入到cpufreq文件夹，可以看到如下一下参数：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">cd /sys/devices/system/cpu/cpu0/cpufreq/</div><div class="line">affected_cpus                cpuinfo_max_freq             cpuinfo_transition_latency   scaling_available_governors  scaling_driver               scaling_max_freq             scaling_setspeed</div><div class="line">cpuinfo_cur_freq             cpuinfo_min_freq             related_cpus                 scaling_cur_freq             scaling_governor             scaling_min_freq</div></pre></td></tr></table></figure></p>
+<p>控制frequency建议的做法是用cpupower这个linux kernel tool来控制，不容易改错参数。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">Usage:  cpupower [-d|--debug] [-c|--cpu cpulist ] &lt;command&gt; [&lt;args&gt;]</div><div class="line">Supported commands are:</div><div class="line">        frequency-info</div><div class="line">        frequency-set</div><div class="line">        idle-info</div><div class="line">        idle-set</div><div class="line">        set</div><div class="line">        info</div><div class="line">        monitor</div><div class="line">        help</div><div class="line"></div><div class="line">Not all commands can make use of the -c cpulist option.</div><div class="line"></div><div class="line">Use &apos;cpupower help &lt;command&gt;&apos; for getting help for above commands.</div></pre></td></tr></table></figure></p>
+<p>主要用的设置命令是用的frequency-set这个指令，具体用法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div></pre></td><td class="code"><pre><div class="line">NAME</div><div class="line">       cpupower frequency-set - A small tool which allows to modify cpufreq settings.</div><div class="line"></div><div class="line">SYNTAX</div><div class="line">       cpupower [ -c cpu ] frequency-set [options]</div><div class="line"></div><div class="line">DESCRIPTION</div><div class="line">       cpupower frequency-set allows you to modify cpufreq settings without having to type e.g. &quot;/sys/devices/system/cpu/cpu0/cpufreq/scaling_set_speed&quot; all the time.</div><div class="line"></div><div class="line">OPTIONS</div><div class="line">       -d --min &lt;FREQ&gt;</div><div class="line">              new minimum CPU frequency the governor may select.</div><div class="line"></div><div class="line">       -u --max &lt;FREQ&gt;</div><div class="line">              new maximum CPU frequency the governor may select.</div><div class="line"></div><div class="line">       -g --governor &lt;GOV&gt;</div><div class="line">              new cpufreq governor.</div><div class="line"></div><div class="line">       -f --freq &lt;FREQ&gt;</div><div class="line">              specific frequency to be set. Requires userspace governor to be available and loaded.</div><div class="line"></div><div class="line">       -r --related</div><div class="line">              modify all hardware-related CPUs at the same time</div><div class="line"></div><div class="line">       REMARKS</div><div class="line"></div><div class="line">       By default values are applied on all cores. How to modify single core configurations is described in the cpupower(1) manpage in the --cpu option section.</div><div class="line"></div><div class="line">       The -f FREQ, --freq FREQ parameter cannot be combined with any other parameter.</div><div class="line"></div><div class="line">       FREQuencies can be passed in Hz, kHz (default), MHz, GHz, or THz by postfixing the value with the wanted unit name, without any space (frequency in kHz =^ Hz * 0.001 =^ MHz * 1000 =^ GHz * 1000000).</div><div class="line"></div><div class="line">       On Linux kernels up to 2.6.29, the -r or --related parameter is ignored.</div></pre></td></tr></table></figure></p>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -115,7 +141,7 @@ Turbo就是我们所说的超频。什么叫超频，顾名思义，就是超出
 
 <div class="article-share" id="share">
 
-  <div data-url="https://lynnapan.github.io/2016/12/15/Turbo和Intel_Pstate/" data-title="Turbo 和 Intel Pstate | Lynna&#39;s Blog" data-tsina="null" class="share clearfix">
+  <div data-url="https://lynnapan.github.io/2016/12/15/Turbo和Intel_Pstate/" data-title="服务器server的频率知识整理 | Lynna&#39;s Blog" data-tsina="null" class="share clearfix">
   </div>
 
 </div>
@@ -124,9 +150,17 @@ Turbo就是我们所说的超频。什么叫超频，顾名思义，就是超出
 	
 <nav class="article-nav clearfix">
  
+ <div class="prev" >
+ <a href="/2017/04/18/understand Cache/" title="Cache缓存知识梳理">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  Cache缓存知识梳理</span>
+</a>
+</div>
+
 
 <div class="next">
-<a href="/2016/07/13/Data Center(1)/"  title="DataCenter Overview:Google Datacenter WSC">
+<a href="/2016/07/13/Data Center/"  title="DataCenter Overview:Google Datacenter WSC">
  <strong>NEXT:</strong><br/> 
  <span>DataCenter Overview:Google Datacenter WSC
 </span>
@@ -138,7 +172,7 @@ Turbo就是我们所说的超频。什么叫超频，顾名思义，就是超出
 	
 <section class="comment">
 	
-	<div class="ds-thread" data-title="Turbo 和 Intel Pstate" data-thread-key="Turbo和Intel_Pstate" data-author-key="Lina Pan" data-url="https://lynnapan.github.io/post/Turbo和Intel_Pstate"></div>
+	<div class="ds-thread" data-title="服务器server的频率知识整理" data-thread-key="Turbo和Intel_Pstate" data-author-key="Lina Pan(panlina_lynna@outlook.com)" data-url="https://lynnapan.github.io/post/Turbo和Intel_Pstate"></div>
 	
 </section>
 
@@ -148,7 +182,7 @@ Turbo就是我们所说的超频。什么叫超频，顾名思义，就是超出
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#关于Turbo"><span class="toc-number">1.</span> <span class="toc-text">关于Turbo</span></a></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-服务器的频率"><span class="toc-number">1.</span> <span class="toc-text">1 服务器的频率</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-控制频率的正确姿势"><span class="toc-number">2.</span> <span class="toc-text">2 控制频率的正确姿势</span></a></li></ol>
   </div>
 
 <div id="asidepart">
@@ -176,7 +210,15 @@ Turbo就是我们所说的超频。什么叫超频，顾名思义，就是超出
 	<p class="asidetitle">Categories</p>
 		<ul>
 		
-			<li><a href="/categories/Data-Center/" title="Data Center">Data Center<sup>2</sup></a></li>
+			<li><a href="/categories/C/" title="C">C<sup>2</sup></a></li>
+		
+			<li><a href="/categories/Coding/" title="Coding">Coding<sup>0</sup></a></li>
+		
+			<li><a href="/categories/Data-Center/" title="Data Center">Data Center<sup>5</sup></a></li>
+		
+			<li><a href="/categories/Machine-Learning/" title="Machine Learning">Machine Learning<sup>2</sup></a></li>
+		
+			<li><a href="/categories/Mesos/" title="Mesos">Mesos<sup>0</sup></a></li>
 		
 			<li><a href="/categories/Python/" title="Python">Python<sup>1</sup></a></li>
 		
@@ -197,6 +239,9 @@ Turbo就是我们所说的超频。什么叫超频，顾名思义，就是超出
     <ul>
       <li><a href="http://julyhou24.org/" target="_blank" title="Hexo">一本正经地胡说八道</a></li>
     </ul>
+    <ul>
+      <li><a href="http://www.litrin.net/" target="_blank" title="Hexo">开源小站</a></li>
+    </ul>
 </div>
 
 
@@ -209,13 +254,16 @@ Turbo就是我们所说的超频。什么叫超频，顾名思义，就是超出
 </aside>
 </div>
     </div>
-    <footer><div id="footer" >
+    <footer><script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+<div id="footer" >
     
-            <p class="copyright"> © 2016 
+            <p class="copyright"> © 2017 
 		
-		<a href="https://lynnapan.github.io" target="_blank" title="Lina Pan">Lina Pan</a>
+		<a href="https://lynnapan.github.io" target="_blank" title="Lina Pan(panlina_lynna@outlook.com)">Lina Pan(panlina_lynna@outlook.com)</a>
 		
-            && Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> && Theme by <a href="http://gengbiao.me" target="_blank" title="coney">coney</a>
+		</br>本站总访问量<span id="busuanzi_value_site_pv"></span>次，本站访客数<span id="busuanzi_value_site_uv"></span>人次，本文总阅读量<span id="busuanzi_value_page_pv"></span>次
+		</br>Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> && Theme by <a href="http://gengbiao.me" target="_blank" title="coney">coney</a>
             </div>
 </footer>
     <script src="/js/jquery-2.1.0.min.js"></script>
